@@ -133,7 +133,7 @@ class StatsRef:
             'Networking / AMSI', 'Network connection , ETW', 'RPC', 'Memory Analysis', 'Cynet AV', 'Memory Scanning/Signatures', 'Signatures in memory', 'Behavior rules']
 
     def __evaluations__(self):
-        return ['apt3', 'apt29', 'carbanak_fin7']
+        return ['apt3', 'apt29', 'carbanak-fin7', 'wizard-spider-sandworm']
 
     def __participants__(self):
         participants = [
@@ -207,19 +207,22 @@ class StatsRef:
         return {
             'apt3': 'N/A None Telemetry IndicatorofCompromise Enrichment GeneralBehavior SpecificBehavior',
             'apt29': 'N/A None MSSP Telemetry General Tactic Technique',
-            'carbanak_fin7': 'N/A None Telemetry General Tactic Technique'
+            'carbanak-fin7': 'N/A None Telemetry General Tactic Technique',
+            'wizard-spider-sandworm': 'N/A None Telemetry General Tactic Technique'
         }
 
     def __participants_by_eval__(self):
         return {'apt3': ['Elastic', 'McAfee', 'F-Secure', 'CrowdStrike', 'FireEye', 'RSA', 'Cybereason', 'Microsoft', 'PaloAltoNetworks', 'GoSecure', 'SentinelOne'], 
         'apt29': ['Elastic', 'McAfee', 'Kaspersky', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Malwarebytes', 'HanSight', 'Microsoft', 'PaloAltoNetworks', 'Secureworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'CyCraft', 'ReaQta'], 
-        'carbanak_fin7': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta']}
+        'carbanak-fin7': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta'],
+        'wizard-spider-sandworm': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta']}
 
     def __modifiers__(self):
         return {
             'apt3': ['Tainted'],
             'apt29': ['Correlated', 'Innovative'],
-            'carbanak_fin7': []
+            'carbanak-fin7': [],
+            'wizard-spider-sandworm': []
         }
 
     def get_references(self):

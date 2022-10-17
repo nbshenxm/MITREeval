@@ -1,3 +1,4 @@
+from fileinput import filename
 import json, os, csv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,8 +19,8 @@ except:
 
 if not os.path.exists(os.getcwd() + '/results'):
     os.makedirs(os.getcwd() + '/results')
-if not os.path.exists(os.getcwd() + 'results/graphs'):
-    os.makedirs(os.getcwd() + 'results/graphs')
+if not os.path.exists(os.getcwd() + '/graphs'):
+    os.makedirs(os.getcwd() + '/graphs')
 
 pd.set_option("display.max_rows", None)
 filenames = [f for f in os.listdir('json')]
@@ -36,8 +37,11 @@ vendor_protections = {}
 datasources = {}
 tactic_protections = {}
 
-def crawl_results(filename, rnd):
-    vendor = filename.split('_Results')[0]
+def crawl_results(filename):
+    print(f'processing {filename}...')
+    name_lst = filename.split('_')
+    vendor = name_lst[0]
+    rnd = name_lst[1]
     vendor_protections[vendor] = {}
     if rnd not in datasources.keys():
         datasources[rnd] = {}
@@ -94,7 +98,7 @@ def crawl_results(filename, rnd):
                 tests = 0
                 for test in elem['Protections']['Protection_Tests']:
                     for step in test['Substeps']:
-                        if rnd == 'carbanak_fin7':
+                        if rnd == 'carbanak-fin7':
                             if step['Technique']['Technique_Name'] not in tactic_protections.keys():
                                 tactic_protections[step['Technique']['Technique_Name']] = {'Total': 0, 'Blocked': 0}
                         if step['Protection_Type'] != 'N/A':
@@ -103,12 +107,15 @@ def crawl_results(filename, rnd):
                         if step['Protection_Type'] == 'Blocked':
                             tactic_protections[step['Technique']['Technique_Name']]['Blocked'] += 1
                             blocks += 1
-                prot_score = blocks/tests
+                if tests == 0:
+                    prot_score = 0
+                else:
+                    prot_score = blocks/tests
             except KeyError:
                 prot_score = 0
             datasources[rnd][vendor]['Tally'] = tally
             vendor_protections[vendor][rnd] = prot_score
-    return pdf
+    return pdf, rnd, vendor
 
 def score_df(df, rnd):
     tdf = df[df['Modifiers'].str.contains('Correlated|Tainted', na=False)]
@@ -218,50 +225,50 @@ def run_analysis(filenames):
     tdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers'))
     if not os.path.exists(os.getcwd() + '/vendor_results.json'):
         vendor_results = {}
-        for adversary in evaluations:
-            vendor_results[adversary] = {}
-            for vendor in participants_by_eval[adversary]:
-                try:
-                    df = crawl_results(vendor + '_Results.json', adversary)
-                    tdf = tdf.append(df, ignore_index=True)
-                    visibility, analytics, quality, confidence = query_df(df, adversary, 'Vendor', vendor)
-                    g = None
-                    g_v = None
-                    g_q = None
-                    g_c = None
-                    pct = analytics * 100
-                    pct_v = visibility * 100
-                    pct_q = quality * 100
-                    pct_c = confidence * 100
-                    for grade in grading.keys():
-                        low = grading[grade][0]
-                        high = grading[grade][1]
-                        if pct >= low and pct <= high:
-                            g = grade
-                        if pct_v >= low and pct_v <= high:
-                            g_v = grade
-                        if pct_q >= low and pct_q <= high:
-                            g_q = grade
-                        if pct_c >= low and pct_c <= high:
-                            g_c = grade
-                    if adversary == 'carbanak_fin7':
-                        tally = datasources['carbanak_fin7'][vendor]['Tally']
-                        availability = (sum(datasources['carbanak_fin7'][vendor].values()) - tally)/tally
-                        vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
-                    else:
-                        vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
-                except TypeError:
-                    pass
+        for file in filenames:
+            try:
+                df, adversary, vendor = crawl_results(file)
+                if adversary not in vendor_results.keys():
+                    vendor_results[adversary] = {}
+                tdf = tdf.append(df, ignore_index=True)
+                visibility, analytics, quality, confidence = query_df(df, adversary, 'Vendor', vendor)
+                g = None
+                g_v = None
+                g_q = None
+                g_c = None
+                pct = analytics * 100
+                pct_v = visibility * 100
+                pct_q = quality * 100
+                pct_c = confidence * 100
+                for grade in grading.keys():
+                    low = grading[grade][0]
+                    high = grading[grade][1]
+                    if pct >= low and pct <= high:
+                        g = grade
+                    if pct_v >= low and pct_v <= high:
+                        g_v = grade
+                    if pct_q >= low and pct_q <= high:
+                        g_q = grade
+                    if pct_c >= low and pct_c <= high:
+                        g_c = grade
+                if adversary == 'carbanak-fin7':
+                    tally = datasources['carbanak-fin7'][vendor]['Tally']
+                    availability = (sum(datasources['carbanak-fin7'][vendor].values()) - tally)/tally
+                    vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
+                else:
+                    vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
+            except TypeError:
+                pass
         max_ = 0
-        for vendor in vendor_results['carbanak_fin7'].keys():
-            if vendor_results['carbanak_fin7'][vendor]['Availability'] > max_:
-                max_ = vendor_results['carbanak_fin7'][vendor]['Availability']
-        for vendor in vendor_results['carbanak_fin7'].keys():
-            vendor_results['carbanak_fin7'][vendor]['Availability'] /= max_
-        with open('vendor_results.json', 'w') as fp:
+        for vendor in vendor_results['carbanak-fin7'].keys():
+            if vendor_results['carbanak-fin7'][vendor]['Availability'] > max_:
+                max_ = vendor_results['carbanak-fin7'][vendor]['Availability']
+        for vendor in vendor_results['carbanak-fin7'].keys():
+            vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
+        with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
     else:
-        with open('vendor_results.json', 'r') as fp:
+        with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
     if not os.path.exists(os.getcwd() + 'tactic_results.json'):
         tactic_results = {}
@@ -317,7 +324,7 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g.set_xlabel("Visibility", fontsize = 20)
     g.set_ylabel("Analytics", fontsize = 20)
     for line in range(0,df.shape[0]):
-        if adversary == 'carbanak_fin7':
+        if adversary == 'carbanak-fin7':
             if df.index[line] == 'Bitdefender':
                 g.text(df['Visibility'][line]+0.005, df['Analytics'][line]+ 0.015, 
                 df.index[line], horizontalalignment='left', 
@@ -388,7 +395,7 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{adversary}/Vendor Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Vendor Breakdown.png')
     plt.close()
 
     quality = []
@@ -408,7 +415,7 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g.set_yticklabels([x/5 for x in list(range(6))], fontsize = 18)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{adversary}/Quality Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Quality Breakdown.png')
     plt.close()
 
     confidence = []
@@ -430,17 +437,19 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g.set_yticks(list(range(5)))
     plt.ylim(0, 4)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{adversary}/Confidence Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Confidence Breakdown.png')
     plt.close()
 
 def graph_protections():
     import matplotlib.ticker as ticker
     protections = []
     vendors = []
-    for vendor in vendor_results['carbanak_fin7'].keys():
+    with open('vendor_results.json', 'r') as fp:
+        vendor_results = json.load(fp)
+    for vendor in vendor_results['carbanak-fin7'].keys():
         vendors.append(vendor)
-        if vendor_results['carbanak_fin7'][vendor]['Protection'] != 'N/A':
-            protections.append(vendor_results['carbanak_fin7'][vendor]['Protection'])
+        if vendor_results['carbanak-fin7'][vendor]['Protection'] != 'N/A':
+            protections.append(vendor_results['carbanak-fin7'][vendor]['Protection'])
         else:
             protections.append(float(0))
     fig = plt.figure(figsize=(12, 12))
@@ -458,7 +467,7 @@ def graph_protections():
     g.set_xticklabels(vendors, rotation=90, fontsize = 16)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/carbanak_fin7/Protection Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/carbanak-fin7/Protection Breakdown.png')
     plt.close()
 
 def graph_rankings(rnd):
@@ -489,7 +498,7 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{rnd}/Unweighted Rankings.png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Unweighted_Rankings.png')
     plt.close()
 
     scores = []
@@ -519,7 +528,7 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{rnd}/Weighted Rankings (Detection).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Detection).png')
     plt.close()
 
     scores = []
@@ -549,7 +558,7 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{rnd}/Weighted Rankings (Correlation).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Correlation).png')
     plt.close()
 
     scores = []
@@ -579,7 +588,7 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/results/graphs/{rnd}/Weighted Rankings (Automation).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Automation).png')
     plt.close()
 
 def make_ranking(vendor_results, rnd, weighted=True):
@@ -587,7 +596,7 @@ def make_ranking(vendor_results, rnd, weighted=True):
     if weighted is True:
         for vendor in vendor_results[rnd].keys():
             rankings[vendor] = {}
-            if rnd == 'carbanak_fin7':
+            if rnd == 'carbanak-fin7':
                 prot = 0 if vendor_results[rnd][vendor]['Protection'] == 'N/A' else vendor_results[rnd][vendor]['Protection']
                 weighted_score = (.25 * prot) + (.25 * vendor_results[rnd][vendor]['Visibility']) + (.2 * vendor_results[rnd][vendor]['Analytics']) + (.2 * (vendor_results[rnd][vendor]['Confidence']/4)) + (.1 * vendor_results[rnd][vendor]['Quality'])
                 unweighted_score = prot + vendor_results[rnd][vendor]['Visibility'] + vendor_results[rnd][vendor]['Analytics'] + (vendor_results[rnd][vendor]['Confidence']/4) + vendor_results[rnd][vendor]['Quality']
@@ -621,11 +630,11 @@ def make_3d_plot(vendor_results):
     correlation_scores = []
     automation_scores = []
     vendors = []
-    for vendor in vendor_results['carbanak_fin7'].keys():
+    for vendor in vendor_results['carbanak-fin7'].keys():
         vendors.append(vendor)
-        detection_scores.append(vendor_results['carbanak_fin7'][vendor]['Visibility'])
-        correlation_scores.append((vendor_results['carbanak_fin7'][vendor]['Analytics'] + (vendor_results['carbanak_fin7'][vendor]['Confidence']/4))/2)
-        automation_scores.append((vendor_results['carbanak_fin7'][vendor]['Quality'] + vendor_results['carbanak_fin7'][vendor]['Protection'])/2)
+        detection_scores.append(vendor_results['carbanak-fin7'][vendor]['Visibility'])
+        correlation_scores.append((vendor_results['carbanak-fin7'][vendor]['Analytics'] + (vendor_results['carbanak-fin7'][vendor]['Confidence']/4))/2)
+        automation_scores.append((vendor_results['carbanak-fin7'][vendor]['Quality'] + vendor_results['carbanak-fin7'][vendor]['Protection'])/2)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -645,7 +654,7 @@ def run_eval():
         rankings[adversary] = ranking
         with open(f'results/{adversary} Rankings.csv', 'w') as fp:
             writer = csv.writer(fp)
-            if adversary == 'carbanak_fin7':
+            if adversary == 'carbanak-fin7':
                 writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
                 rs = []
                 vs = []
@@ -685,7 +694,7 @@ def run_eval():
                         writer.writerow([item[0], "%.3f" % item[1], "%.3f" %  vendor_results[adversary][item[0]]['Visibility'], "%.3f" %  vendor_results[adversary][item[0]]['Analytics'],"%.3f" %  (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" %  vendor_results[adversary][item[0]]['Quality']])
                     except:
                         pass
-    graph_rankings('carbanak_fin7')
+    graph_rankings('carbanak-fin7')
     graph_protections()
 
 if __name__ == "__main__":

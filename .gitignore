@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__
+graphs/
+graphs_old/
+results/
+results_old/
+json_old/
