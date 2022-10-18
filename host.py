@@ -71,13 +71,13 @@ class Plotter:
         automation_scores = []
         vendors = []
         colors = []
-        for vendor in vendor_results['carbanak_fin7'].keys():
+        for vendor in vendor_results['carbanak-fin7'].keys():
             vendors.append(vendor)
-            detection_scores.append(vendor_results['carbanak_fin7'][vendor]['Visibility'])
-            correlation_scores.append((vendor_results['carbanak_fin7'][vendor]['Analytics'] + (vendor_results['carbanak_fin7'][vendor]['Confidence']/4))/2)
-            automation_scores.append((vendor_results['carbanak_fin7'][vendor]['Quality'] + vendor_results['carbanak_fin7'][vendor]['Protection'])/2)
-            score = vendor_results['carbanak_fin7'][vendor]['Visibility'] + ((vendor_results['carbanak_fin7'][vendor]['Analytics'] + (vendor_results['carbanak_fin7'][vendor]['Confidence']/4))/2)\
-                + ((vendor_results['carbanak_fin7'][vendor]['Quality'] + vendor_results['carbanak_fin7'][vendor]['Protection'])/2)
+            detection_scores.append(vendor_results['carbanak-fin7'][vendor]['Visibility'])
+            correlation_scores.append((vendor_results['carbanak-fin7'][vendor]['Analytics'] + (vendor_results['carbanak-fin7'][vendor]['Confidence']/4))/2)
+            automation_scores.append((vendor_results['carbanak-fin7'][vendor]['Quality'] + vendor_results['carbanak-fin7'][vendor]['Protection'])/2)
+            score = vendor_results['carbanak-fin7'][vendor]['Visibility'] + ((vendor_results['carbanak-fin7'][vendor]['Analytics'] + (vendor_results['carbanak-fin7'][vendor]['Confidence']/4))/2)\
+                + ((vendor_results['carbanak-fin7'][vendor]['Quality'] + vendor_results['carbanak-fin7'][vendor]['Protection'])/2)
             score /= 5
             if score <= 1.0 and score > .85:
                 colors.append(4)
@@ -100,16 +100,16 @@ class Plotter:
         techniques = []
         colors = []
         colors2 = []
-        for tactic in tactic_results['carbanak_fin7'].keys():
-            for technique in tactic_results['carbanak_fin7'][tactic].keys():
-                detection_scores.append(tactic_results['carbanak_fin7'][tactic][technique]['Visibility'])
-                correlation_scores.append((tactic_results['carbanak_fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak_fin7'][tactic][technique]['Confidence']/4))/2)
-                automation_scores.append((tactic_results['carbanak_fin7'][tactic][technique]['Quality'] + tactic_results['carbanak_fin7'][tactic][technique]['Protection'])/2)
-                quality_scores.append(tactic_results['carbanak_fin7'][tactic][technique]['Quality'])
+        for tactic in tactic_results['carbanak-fin7'].keys():
+            for technique in tactic_results['carbanak-fin7'][tactic].keys():
+                detection_scores.append(tactic_results['carbanak-fin7'][tactic][technique]['Visibility'])
+                correlation_scores.append((tactic_results['carbanak-fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak-fin7'][tactic][technique]['Confidence']/4))/2)
+                automation_scores.append((tactic_results['carbanak-fin7'][tactic][technique]['Quality'] + tactic_results['carbanak-fin7'][tactic][technique]['Protection'])/2)
+                quality_scores.append(tactic_results['carbanak-fin7'][tactic][technique]['Quality'])
                 techniques.append(technique)
 
-                score = tactic_results['carbanak_fin7'][tactic][technique]['Visibility'] + ((tactic_results['carbanak_fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak_fin7'][tactic][technique]['Confidence']/4))/2) \
-                    + ((tactic_results['carbanak_fin7'][tactic][technique]['Quality'] + tactic_results['carbanak_fin7'][tactic][technique]['Protection'])/2)
+                score = tactic_results['carbanak-fin7'][tactic][technique]['Visibility'] + ((tactic_results['carbanak-fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak-fin7'][tactic][technique]['Confidence']/4))/2) \
+                    + ((tactic_results['carbanak-fin7'][tactic][technique]['Quality'] + tactic_results['carbanak-fin7'][tactic][technique]['Protection'])/2)
                 score /= 5
                 if score <= 1.0 and score > .85:
                     colors.append("#39a83b")
@@ -122,8 +122,8 @@ class Plotter:
                 elif score < .4:
                     colors.append("#f52234")
 
-                q_score = tactic_results['carbanak_fin7'][tactic][technique]['Visibility'] + ((tactic_results['carbanak_fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak_fin7'][tactic][technique]['Confidence']/4))/2) \
-                    + tactic_results['carbanak_fin7'][tactic][technique]['Quality']
+                q_score = tactic_results['carbanak-fin7'][tactic][technique]['Visibility'] + ((tactic_results['carbanak-fin7'][tactic][technique]['Analytics'] + (tactic_results['carbanak-fin7'][tactic][technique]['Confidence']/4))/2) \
+                    + tactic_results['carbanak-fin7'][tactic][technique]['Quality']
                 q_score /= 4
                 if q_score <= 1.0 and q_score > .85:
                     colors2.append("#39a83b")

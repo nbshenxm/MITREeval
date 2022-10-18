@@ -12,8 +12,9 @@ from ref import StatsRef
 import seaborn as sns
 
 try:
-    os.remove('tactic_results.json')
-    os.remove('vendor_results.json')
+    os.remove('results/tactic_results.json')
+    os.remove('results/vendor_results.json')
+    print("Deleting old result files...")
 except:
     pass
 
@@ -223,7 +224,7 @@ def query_df(pdf, rnd, mode, query):
 
 def run_analysis(filenames):
     tdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers'))
-    if not os.path.exists(os.getcwd() + '/vendor_results.json'):
+    if not os.path.exists(os.path.join(os.getcwd(), 'results/vendor_results.json')):
         vendor_results = {}
         for file in filenames:
             try:
@@ -270,7 +271,7 @@ def run_analysis(filenames):
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
-    if not os.path.exists(os.getcwd() + 'tactic_results.json'):
+    if not os.path.exists(os.path.join(os.getcwd(), 'results/vendor_results.json')):
         tactic_results = {}
         for adversary in evaluations:
             tactic_results[adversary] = {}
@@ -444,7 +445,7 @@ def graph_protections():
     import matplotlib.ticker as ticker
     protections = []
     vendors = []
-    with open('vendor_results.json', 'r') as fp:
+    with open('results/vendor_results.json', 'r') as fp:
         vendor_results = json.load(fp)
     for vendor in vendor_results['carbanak-fin7'].keys():
         vendors.append(vendor)
