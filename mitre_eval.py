@@ -271,7 +271,7 @@ def run_analysis(filenames):
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
-    if not os.path.exists(os.path.join(os.getcwd(), 'results/vendor_results.json')):
+    if not os.path.exists(os.path.join(os.getcwd(), 'results/tactic_results.json')):
         tactic_results = {}
         for adversary in evaluations:
             tactic_results[adversary] = {}
@@ -475,7 +475,7 @@ def graph_rankings(rnd):
     import matplotlib.ticker as ticker
     scores = []
     vendors = []
-    with open(f'results/{rnd} Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -504,7 +504,7 @@ def graph_rankings(rnd):
 
     scores = []
     vendors = []
-    with open(f'results/{rnd} Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -534,7 +534,7 @@ def graph_rankings(rnd):
 
     scores = []
     vendors = []
-    with open(f'results/{rnd} Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -564,7 +564,7 @@ def graph_rankings(rnd):
 
     scores = []
     vendors = []
-    with open(f'results/{rnd} Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -653,7 +653,7 @@ def run_eval():
     for adversary in vendor_results.keys():
         ranking = make_ranking(vendor_results, adversary)
         rankings[adversary] = ranking
-        with open(f'results/{adversary} Rankings.csv', 'w') as fp:
+        with open(f'results/{adversary}_Rankings.csv', 'w') as fp:
             writer = csv.writer(fp)
             if adversary == 'carbanak-fin7':
                 writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
@@ -696,6 +696,8 @@ def run_eval():
                     except:
                         pass
     graph_rankings('carbanak-fin7')
+    graph_rankings('wizard-spider-sandworm')
+    # graph_results('carbanak-fin7', vendor_results, tactic_results)
     graph_protections()
 
 if __name__ == "__main__":
