@@ -252,9 +252,9 @@ def run_analysis(filenames):
                         g_q = grade
                     if pct_c >= low and pct_c <= high:
                         g_c = grade
-                if adversary == 'carbanak-fin7':
-                    tally = datasources['carbanak-fin7'][vendor]['Tally']
-                    availability = (sum(datasources['carbanak-fin7'][vendor].values()) - tally)/tally
+                if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
+                    tally = datasources[adversary][vendor]['Tally']
+                    availability = (sum(datasources[adversary][vendor].values()) - tally)/tally
                     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
                 else:
                     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
@@ -441,16 +441,16 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     plt.savefig(os.getcwd() + f'/graphs/{adversary}/Confidence Breakdown.png')
     plt.close()
 
-def graph_protections():
+def graph_protections(adversary):
     import matplotlib.ticker as ticker
     protections = []
     vendors = []
     with open('results/vendor_results.json', 'r') as fp:
         vendor_results = json.load(fp)
-    for vendor in vendor_results['carbanak-fin7'].keys():
+    for vendor in vendor_results[adversary].keys():
         vendors.append(vendor)
-        if vendor_results['carbanak-fin7'][vendor]['Protection'] != 'N/A':
-            protections.append(vendor_results['carbanak-fin7'][vendor]['Protection'])
+        if vendor_results[adversary][vendor]['Protection'] != 'N/A':
+            protections.append(vendor_results[adversary][vendor]['Protection'])
         else:
             protections.append(float(0))
     fig = plt.figure(figsize=(12, 12))
@@ -468,7 +468,7 @@ def graph_protections():
     g.set_xticklabels(vendors, rotation=90, fontsize = 16)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/carbanak-fin7/Protection Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Protection Breakdown.png')
     plt.close()
 
 def graph_rankings(rnd):
@@ -597,7 +597,7 @@ def make_ranking(vendor_results, rnd, weighted=True):
     if weighted is True:
         for vendor in vendor_results[rnd].keys():
             rankings[vendor] = {}
-            if rnd == 'carbanak-fin7':
+            if rnd == 'carbanak-fin7' or rnd == 'wizard-spider-sandworm':
                 prot = 0 if vendor_results[rnd][vendor]['Protection'] == 'N/A' else vendor_results[rnd][vendor]['Protection']
                 weighted_score = (.25 * prot) + (.25 * vendor_results[rnd][vendor]['Visibility']) + (.2 * vendor_results[rnd][vendor]['Analytics']) + (.2 * (vendor_results[rnd][vendor]['Confidence']/4)) + (.1 * vendor_results[rnd][vendor]['Quality'])
                 unweighted_score = prot + vendor_results[rnd][vendor]['Visibility'] + vendor_results[rnd][vendor]['Analytics'] + (vendor_results[rnd][vendor]['Confidence']/4) + vendor_results[rnd][vendor]['Quality']
@@ -607,6 +607,7 @@ def make_ranking(vendor_results, rnd, weighted=True):
             else:
                 weighted_score = (.3 * vendor_results[rnd][vendor]['Visibility']) + (.25 * vendor_results[rnd][vendor]['Analytics']) + (.25 * (vendor_results[rnd][vendor]['Confidence']/4)) + (.2 * vendor_results[rnd][vendor]['Quality'])
                 unweighted_score = vendor_results[rnd][vendor]['Visibility'] + vendor_results[rnd][vendor]['Analytics'] + (vendor_results[rnd][vendor]['Confidence']/4) + vendor_results[rnd][vendor]['Quality']
+                unweighted_score /= 4
                 rankings[vendor]['Weighted'] = weighted_score
                 rankings[vendor]['Unweighted'] = unweighted_score
     return rankings
@@ -653,9 +654,9 @@ def run_eval():
     for adversary in vendor_results.keys():
         ranking = make_ranking(vendor_results, adversary)
         rankings[adversary] = ranking
-        with open(f'results/{adversary}_Rankings.csv', 'w') as fp:
+        with open(f'results/{adversary}_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
-            if adversary == 'carbanak-fin7':
+            if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
                 writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
                 rs = []
                 vs = []
@@ -698,7 +699,9 @@ def run_eval():
     graph_rankings('carbanak-fin7')
     graph_rankings('wizard-spider-sandworm')
     # graph_results('carbanak-fin7', vendor_results, tactic_results)
-    graph_protections()
+    graph_protections('carbanak-fin7')
+    graph_protections('wizard-spider-sandworm')
+    
 
 if __name__ == "__main__":
     run_eval()
