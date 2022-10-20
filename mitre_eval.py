@@ -32,8 +32,9 @@ for e in evaluations:
     if not os.path.exists(os.getcwd() + f'/graphs/{e}'):
         os.makedirs(os.getcwd() + f'/graphs/{e}')
 
-technique_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
-vendor_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
+# technique_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
+# vendor_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
+technique_coverage = {}
 vendor_protections = {}
 datasources = {}
 tactic_protections = {}
@@ -46,6 +47,8 @@ def crawl_results(filename):
     vendor_protections[vendor] = {}
     if rnd not in datasources.keys():
         datasources[rnd] = {}
+    if rnd not in technique_coverage.keys():
+        technique_coverage[rnd] = {}
     pdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers'))
     with open('json/' + filename, 'r') as fp:
         data = json.load(fp)
@@ -59,12 +62,17 @@ def crawl_results(filename):
                         tally += 1
                         obj = {'Vendor': vendor, 'Adversary': rnd, 'Substep':None, 'Criteria':None, 'Tactic':None, 'TechniqueId':None, 'TechniqueName':None, 'SubtechniqueId':None, 'Detection':None, 'Modifiers':None}
                         technique = substep['Technique']['Technique_Name']
+                        tactic = substep['Tactic']['Tactic_Name']
+                        if tactic not in technique_coverage[rnd].keys():
+                            technique_coverage[rnd][tactic] = []
+                        if technique not in technique_coverage[rnd][tactic]:
+                            technique_coverage[rnd][tactic].append(technique)
                         detections = substep['Detections']
                         obj['Substep'] = substep['Substep']
                         obj['Criteria'] = substep['Criteria']
-                        obj['Tactic'] = substep['Tactic']['Tactic_Name']
+                        obj['Tactic'] = tactic
                         obj['TechniqueId'] = substep['Technique']['Technique_Id']
-                        obj['TechniqueName'] = substep['Technique']['Technique_Name']
+                        obj['TechniqueName'] = technique
                         obj['SubtechniqueId'] = substep['Subtechnique']['Subtechnique_Id']
                         ret = {'Detection_Type':'None', 'Modifiers':'', 'Indicator':'', 'Indicator_Name':''} 
                         dt = Enum('DetectionTypes', detection_types[rnd])
@@ -99,7 +107,7 @@ def crawl_results(filename):
                 tests = 0
                 for test in elem['Protections']['Protection_Tests']:
                     for step in test['Substeps']:
-                        if rnd == 'carbanak-fin7':
+                        if rnd == 'carbanak-fin7' or rnd == 'wizard-spider-sandworm':
                             if step['Technique']['Technique_Name'] not in tactic_protections.keys():
                                 tactic_protections[step['Technique']['Technique_Name']] = {'Total': 0, 'Blocked': 0}
                         if step['Protection_Type'] != 'N/A':
@@ -275,9 +283,9 @@ def run_analysis(filenames):
         tactic_results = {}
         for adversary in evaluations:
             tactic_results[adversary] = {}
-            for tactic in attacks.keys():
+            for tactic in technique_coverage[adversary].keys():
                 tactic_results[adversary][tactic] = {}
-                for technique in attacks[tactic].keys():
+                for technique in technique_coverage[adversary][tactic]:
                     vis = 0
                     ana = 0
                     qua = 0
