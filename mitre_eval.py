@@ -483,7 +483,7 @@ def graph_rankings(rnd):
     import matplotlib.ticker as ticker
     scores = []
     vendors = []
-    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_vendor_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -507,12 +507,12 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Unweighted_Rankings.png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Unweighted_Vendor_Rankings.png')
     plt.close()
 
     scores = []
     vendors = []
-    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_vendor_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -537,12 +537,12 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Detection).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted_Vendor_Rankings(Detection).png')
     plt.close()
 
     scores = []
     vendors = []
-    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_vendor_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -567,12 +567,12 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Correlation).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted_Vendor_Rankings(Correlation).png')
     plt.close()
 
     scores = []
     vendors = []
-    with open(f'results/{rnd}_Rankings.csv', 'r') as fp:
+    with open(f'results/{rnd}_vendor_Rankings.csv', 'r') as fp:
         reader = csv.reader(fp)
         for row in reader:
             if row[1] == 'Unweighted Score':
@@ -597,10 +597,10 @@ def graph_rankings(rnd):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted Rankings (Automation).png')
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/Weighted_Vendor_Rankings(Automation).png')
     plt.close()
 
-def make_ranking(vendor_results, rnd, weighted=True):
+def make_vendor_ranking(vendor_results, rnd, weighted=True):
     rankings = {}
     if weighted is True:
         for vendor in vendor_results[rnd].keys():
@@ -608,8 +608,8 @@ def make_ranking(vendor_results, rnd, weighted=True):
             if rnd == 'carbanak-fin7' or rnd == 'wizard-spider-sandworm':
                 prot = 0 if vendor_results[rnd][vendor]['Protection'] == 'N/A' else vendor_results[rnd][vendor]['Protection']
                 weighted_score = (.25 * prot) + (.25 * vendor_results[rnd][vendor]['Visibility']) + (.2 * vendor_results[rnd][vendor]['Analytics']) + (.2 * (vendor_results[rnd][vendor]['Confidence']/4)) + (.1 * vendor_results[rnd][vendor]['Quality'])
-                unweighted_score = prot + vendor_results[rnd][vendor]['Visibility'] + vendor_results[rnd][vendor]['Analytics'] + (vendor_results[rnd][vendor]['Confidence']/4) + vendor_results[rnd][vendor]['Quality']
-                unweighted_score /= 5 
+                unweighted_score = vendor_results[rnd][vendor]['Visibility'] + vendor_results[rnd][vendor]['Analytics'] + (vendor_results[rnd][vendor]['Confidence']/4) + vendor_results[rnd][vendor]['Quality']
+                unweighted_score /= 4
                 rankings[vendor]['Weighted'] = weighted_score
                 rankings[vendor]['Unweighted'] = unweighted_score
             else:
@@ -618,6 +618,28 @@ def make_ranking(vendor_results, rnd, weighted=True):
                 unweighted_score /= 4
                 rankings[vendor]['Weighted'] = weighted_score
                 rankings[vendor]['Unweighted'] = unweighted_score
+    return rankings
+
+def make_technique_ranking(tactic_results, rnd, weighted=True):
+    rankings = {}
+    if weighted is True:
+        for tactic in tactic_results[rnd].keys():
+            rankings[tactic] = {}
+            for technique in tactic_results[rnd][tactic].keys():
+                rankings[tactic][technique] = {}
+                if rnd == 'carbanak-fin7' or rnd == 'wizard-spider-sandworm':
+                    prot = 0 if tactic_results[rnd][tactic][technique]['Protection'] == 'N/A' else tactic_results[rnd][tactic][technique]['Protection']
+                    weighted_score = (.25 * prot) + (.25 * tactic_results[rnd][tactic][technique]['Visibility']) + (.2 * tactic_results[rnd][tactic][technique]['Analytics']) + (.2 * (tactic_results[rnd][tactic][technique]['Confidence']/4)) + (.1 * tactic_results[rnd][tactic][technique]['Quality'])
+                    unweighted_score = tactic_results[rnd][tactic][technique]['Visibility'] + tactic_results[rnd][tactic][technique]['Analytics'] + (tactic_results[rnd][tactic][technique]['Confidence']/4) + tactic_results[rnd][tactic][technique]['Quality']
+                    unweighted_score /= 4
+                    rankings[tactic][technique]['Weighted'] = weighted_score
+                    rankings[tactic][technique]['Unweighted'] = unweighted_score
+                else:
+                    weighted_score = (.3 * tactic_results[rnd][tactic][technique]['Visibility']) + (.25 * tactic_results[rnd][tactic][technique]['Analytics']) + (.25 * (tactic_results[rnd][tactic][technique]['Confidence']/4)) + (.2 * tactic_results[rnd][tactic][technique]['Quality'])
+                    unweighted_score = tactic_results[rnd][tactic][technique]['Visibility'] + tactic_results[rnd][tactic][technique]['Analytics'] + (tactic_results[rnd][tactic][technique]['Confidence']/4) + tactic_results[rnd][tactic][technique]['Quality']
+                    unweighted_score /= 4
+                    rankings[tactic][technique]['Weighted'] = weighted_score
+                    rankings[tactic][technique]['Unweighted'] = unweighted_score
     return rankings
 
 def make_tactic_rankings(tactic_results, rnd):
@@ -660,9 +682,9 @@ def run_eval():
     vendor_results, tactic_results, vendor_protections = run_analysis(filenames)
     rankings = {}
     for adversary in vendor_results.keys():
-        ranking = make_ranking(vendor_results, adversary)
+        ranking = make_vendor_ranking(vendor_results, adversary)
         rankings[adversary] = ranking
-        with open(f'results/{adversary}_Rankings.csv', 'w', newline='') as fp:
+        with open(f'results/{adversary}_vendor_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
             if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
                 writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
@@ -704,6 +726,73 @@ def run_eval():
                         writer.writerow([item[0], "%.3f" % item[1], "%.3f" %  vendor_results[adversary][item[0]]['Visibility'], "%.3f" %  vendor_results[adversary][item[0]]['Analytics'],"%.3f" %  (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" %  vendor_results[adversary][item[0]]['Quality']])
                     except:
                         pass
+    
+    for adversary in tactic_results.keys():
+        ranking = make_technique_ranking(tactic_results, adversary)
+        rankings[adversary] = ranking
+        with open(f'results/{adversary}_technique_Rankings.csv', 'w', newline='') as fp:
+            writer = csv.writer(fp)
+            if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
+                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
+                rs = []
+                ts = []
+                us = []
+                for tactic in ranking.keys():
+                    for technique in ranking[tactic].keys():
+                        us.append(tactic)
+                        ts.append(technique)
+                        rs.append(ranking[tactic][technique]['Unweighted'])
+                us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
+                scores = zip(reversed(us), reversed(ts), reversed(rs))
+                for item in scores:
+                    if tactic_results[adversary][item[0]][item[1]]['Protection'] == 'N/A':
+                        prot = 0
+                    else:
+                        prot = tactic_results[adversary][item[0]][item[1]]['Protection']
+                    visibility = tactic_results[adversary][item[0]][item[1]]['Visibility']
+                    analytics = tactic_results[adversary][item[0]][item[1]]['Analytics']
+                    confidence = tactic_results[adversary][item[0]][item[1]]['Confidence']/4
+                    quality = tactic_results[adversary][item[0]][item[1]]['Quality']
+                    det_score = (.3 * visibility)+ (.175 * analytics) + (.175 * confidence) + (.175 * quality) + (.175 * prot)
+                    corr_score = (.2 * visibility)+ (.25 * analytics) + (.25 * confidence) + (.20 * quality) + (.10 * prot)
+                    auto_score = (.2 * visibility)+ (.15 * analytics) + (.15 * confidence) + (.25 * quality) + (.25 * prot)
+                    try:
+                        writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" % det_score, "%.3f" % corr_score, "%.3f" % auto_score, "%.3f" % tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" % tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" % (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" % tactic_results[adversary][item[0]][item[1]]['Quality'], "%.3f" % prot])
+                    except Exception as e:
+                        print(e)
+            else:
+                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Visibility', 'Analytics', 'Confidence', 'Quality'])
+                rs = []
+                ts = []
+                us = []
+                for tactic in ranking.keys():
+                    for technique in ranking[tactic].keys():
+                        us.append(tactic)
+                        ts.append(technique)
+                        rs.append(ranking[tactic][technique]['Unweighted'])
+                us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
+                scores = zip(reversed(us), reversed(ts), reversed(rs))
+                for item in scores:
+                    try:
+                        writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" %  (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Quality']])
+                    except:
+                        pass
+    technique_set_1 = set()
+    for tactic in technique_coverage['carbanak-fin7'].keys():
+        for t in technique_coverage['carbanak-fin7'][tactic]:
+            technique_set_1.add(t)
+            # print(f'adding {t} to the set, size: {len(technique_set_1)}')
+    print(f'there are {len(technique_set_1)} techniques in carbanak-fin7')
+    technique_set_2 = set()
+    for tactic in technique_coverage['wizard-spider-sandworm'].keys():
+        for t in technique_coverage['wizard-spider-sandworm'][tactic]:
+            technique_set_2.add(t)
+            # print(f'adding {t} to the set, size: {len(technique_set_2)}')
+    print(f'there are {len(technique_set_2)} techniques in wizard-spider-sandworm')
+
+    technique_set = technique_set_1 | technique_set_2
+    print(f'there are {len(technique_set)} techniques in two evluations')
+
     graph_rankings('carbanak-fin7')
     graph_rankings('wizard-spider-sandworm')
     # graph_results('carbanak-fin7', vendor_results, tactic_results)
