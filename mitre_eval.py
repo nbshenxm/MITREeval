@@ -10,6 +10,7 @@ import pandas as pd
 from enum import Enum
 from ref import StatsRef
 import seaborn as sns
+from graph import Graph
 
 try:
     os.remove('results/tactic_results.json')
@@ -230,13 +231,162 @@ def query_df(pdf, rnd, mode, query):
     visibility, analytics, quality, confidence = score_df(df, rnd)
     return visibility, analytics, quality, confidence
 
+def analyze_graph(df):
+    step_list = [
+    "1.A.1",
+    "1.A.2",
+    "1.A.3",
+    "1.A.4",
+    "1.A.5",
+    "1.A.6",
+    "1.A.7",
+    "1.A.8",
+    "1.A.9",
+    "1.A.10",
+    "1.A.11",
+    "2.A.1",
+    "3.A.1",
+    "3.A.2",
+    "3.A.3",
+    "3.A.4",
+    "3.A.5",
+    "4.A.1",
+    "4.A.2",
+    "4.A.3",
+    "4.A.4",
+    "4.A.5",
+    "5.A.1",
+    "5.A.2",
+    "5.A.3",
+    "5.A.4",
+    "5.A.5",
+    "5.A.6",
+    "5.A.7",
+    "5.A.8",
+    "5.A.9",
+    "6.A.1",
+    "6.A.2",
+    "7.A.1",
+    "7.A.2",
+    "7.A.3",
+    "7.A.4",
+    "7.A.5",
+    "8.A.1",
+    "8.A.2",
+    "9.A.1",
+    "9.A.2",
+    "9.A.3",
+    "9.A.4",
+    "9.A.5",
+    "10.A.1",
+    "10.A.2",
+    "10.A.3",
+    "10.A.4",
+    "10.A.5",
+    "10.A.6",
+    "10.A.7"]
+
+    connectivity = {
+    0: [1, 2],
+    1: [0],
+    2: [0, 3],
+    3: [2, 5, 6],
+    4: [],
+    5: [3],
+    6: [3, 7],
+    7: [6, 8],
+    8: [7, 9, 11, 12, 13, 14, 15, 16],
+    9: [8],
+    10: [],
+    11: [8],
+    12: [8],
+    13: [8],
+    14: [8],
+    15: [8],
+    16: [8],
+    17: [19, 20],
+    18: [],
+    19: [17, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+    20: [17, 19],
+    21: [],
+    22: [19],
+    23: [19],
+    24: [19],
+    25: [19],
+    26: [19],
+    27: [19],
+    28: [19],
+    29: [19],
+    30: [19],
+    31: [19, 32],
+    32: [31],
+    33: [35, 36, 37, 38, 39],
+    34: [],
+    35: [33],
+    36: [33],
+    37: [33],
+    38: [33, 40, 41, 42, 43, 44, 45],
+    39: [33],
+    40: [38],
+    41: [38],
+    42: [38],
+    43: [38],
+    44: [38],
+    45: [38, 46, 47, 48, 49, 50, 51],
+    46: [45],
+    47: [45],
+    48: [45],
+    49: [45],
+    50: [45],
+    51: [45]}
+
+    exist = {}
+    miss = []
+    skip = [4, 10, 18, 21, 34]
+    for index, row in df.iterrows():
+        detection = row["Detection"]
+        substep = row["Substep"]
+        try:
+            idx = step_list.index(row["Substep"])
+        except ValueError:
+            idx = -1
+        
+        if idx in skip:
+            continue
+        if detection != 'None' and idx != -1:
+            exist[idx] = connectivity[idx]
+        else:
+            miss.append(idx)
+    g = Graph()
+    for v in exist:
+        g.add_node(v)
+        # print('adding node: ', v)
+    for v in exist:
+        for w in exist[v]:
+            if w in exist:
+                g.add_edge(v,w)
+            # print('adding edge to: ', w)
+    cc = g.connected_components()
+    # print("Following are connected components")
+    # print(cc)
+    # print(len(cc))
+    # print(miss)
+    # print(connection)
+    # print(len(connection))
+    return len(cc), len(exist)
+
+
 def run_analysis(filenames):
     tdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers'))
     if not os.path.exists(os.path.join(os.getcwd(), 'results/vendor_results.json')):
         vendor_results = {}
+        seg_dict = {}
         for file in filenames:
             try:
                 df, adversary, vendor = crawl_results(file)
+                if adversary == 'wizard-spider-sandworm':
+                    segmentation, visibility = analyze_graph(df)
+                    seg_dict[vendor] = {'seg':segmentation, 'vis': visibility}
                 if adversary not in vendor_results.keys():
                     vendor_results[adversary] = {}
                 tdf = tdf.append(df, ignore_index=True)
@@ -266,8 +416,8 @@ def run_analysis(filenames):
                     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
                 else:
                     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
-            except TypeError:
-                pass
+            except Exception as e:
+                print(e)
         max_ = 0
         for vendor in vendor_results['carbanak-fin7'].keys():
             if vendor_results['carbanak-fin7'][vendor]['Availability'] > max_:
@@ -276,6 +426,7 @@ def run_analysis(filenames):
             vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
         with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
+        print(seg_dict)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
