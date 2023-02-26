@@ -232,7 +232,7 @@ def query_df(pdf, rnd, mode, query):
     return visibility, analytics, quality, confidence
 
 def analyze_graph(df):
-    step_list = [
+    wizard_spider_list = [
     "1.A.1",
     "1.A.2",
     "1.A.3",
@@ -286,7 +286,10 @@ def analyze_graph(df):
     "10.A.6",
     "10.A.7"]
 
-    connectivity = {
+    sandworm_list = ['11.A.1', '11.A.2', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '13.A.4', '13.A.5', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5', '15.A.1', '15.A.2', '15.A.3', '15.A.4', '15.A.5', '15.A.6', '15.A.7', '15.A.8', '15.A.9', '15.A.10', '16.A.1', '16.A.2', '16.A.3', '16.A.4', '16.A.5', '17.A.1', '17.A.2', '17.A.3', '17.A.4', '17.A.5', '17.A.6', '17.A.7', '17.A.8', '18.A.1', '18.A.2', '18.A.3', '18.A.4', '19.A.1', '19.A.2', '19.A.3', '19.A.4', '19.A.5', '19.A.6', '19.A.7', '19.A.8', '19.A.9', '19.A.10', '19.A.11']
+
+
+    wizard_spider_connectivity = {
     0: [1, 2],
     1: [0],
     2: [0, 3],
@@ -340,32 +343,114 @@ def analyze_graph(df):
     50: [45],
     51: [45]}
 
+    sandworm_connectivity = {
+    0: [2],
+    1: [],
+    2: [0, 3],
+    3: [2, 4],
+    4: [3, 5, 6, 7, 8],
+    5: [4],
+    6: [4],
+    7: [4],
+    8: [4],
+    9: [4, 10],
+    10: [9, 11, 14, 15, 16, 17, 18],
+    11: [10],
+    12: [],
+    13: [],
+    14: [10],
+    15: [10],
+    16: [10],
+    17: [10],
+    18: [10],
+    19: [21, 22],
+    20: [],
+    21: [19, 26],
+    22: [19, 23],
+    23: [22, 24],
+    24: [23, 25, 26],
+    25: [24],
+    26: [21, 24, 27, 29, 30, 31, 32, 34, 36, 38, 39, 40, 41],
+    27: [26],
+    28: [],
+    29: [26],
+    30: [26],
+    31: [26],
+    32: [26, 33],
+    33: [32],
+    34: [26, 35, 41],
+    35: [34],
+    36: [26, 37, 41],
+    37: [36],
+    38: [26, 39, 41],
+    39: [26, 38],
+    40: [26],
+    41: [26, 34, 36, 38],
+    42: [44],
+    43: [],
+    44: [42, 45],
+    45: [44, 46],
+    46: [45, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56],
+    47: [46],
+    48: [46],
+    49: [46],
+    50: [46],
+    51: [46],
+    52: [46],
+    53: [46],
+    54: [46],
+    55: [46],
+    56: [46]}
+
     exist = {}
+    above_tel = {}
     miss = []
-    skip = [4, 10, 18, 21, 34]
+    wizard_spider_skip = [4, 10, 18, 21, 34]
+    sandworm_skip = [1, 12, 13, 20, 28, 43]
+
     for index, row in df.iterrows():
         detection = row["Detection"]
         substep = row["Substep"]
-        try:
-            idx = step_list.index(row["Substep"])
-        except ValueError:
-            idx = -1
-        
-        if idx in skip:
+        # try:
+        #     idx = wizard_spider_list.index(substep)
+        # 
+        #     idx = sandworm_list.index()
+        if substep in wizard_spider_list:
+            idx = wizard_spider_list.index(substep)
+        elif substep in sandworm_list:
+            idx = sandworm_list.index(substep) + 52
+        # print(idx)
+
+        if (idx in wizard_spider_skip) or (idx-52 in sandworm_skip):
+            print("skipping...")
             continue
-        if detection != 'None' and idx != -1:
-            exist[idx] = connectivity[idx]
+        if detection != 'None':
+            if idx < 52:
+                # print("idx in wizard_spider")
+                exist[idx] = wizard_spider_connectivity[idx]
+                if detection != 'Telemetry':
+                    above_tel[idx] = wizard_spider_connectivity[idx]
+            else:
+                # print("idx in sandworm")
+                exist[idx] = sandworm_connectivity[idx-52]
+                if detection != 'Telemetry':
+                    above_tel[idx] = sandworm_connectivity[idx-52]
         else:
             miss.append(idx)
+        # print(idx)
     g = Graph()
     for v in exist:
         g.add_node(v)
         # print('adding node: ', v)
     for v in exist:
         for w in exist[v]:
-            if w in exist:
-                g.add_edge(v,w)
-            # print('adding edge to: ', w)
+            if v < 52:
+                tmp_w = w
+            else:
+                tmp_w = w + 52
+            if tmp_w in exist:
+                g.add_edge(v,tmp_w)
+            # print('adding edge to: ', tmp_w)
     cc = g.connected_components()
     # print("Following are connected components")
     # print(cc)
@@ -373,7 +458,7 @@ def analyze_graph(df):
     # print(miss)
     # print(connection)
     # print(len(connection))
-    return len(cc), len(exist)
+    return len(cc), len(exist), len(above_tel)
 
 
 def run_analysis(filenames):
@@ -385,8 +470,8 @@ def run_analysis(filenames):
             try:
                 df, adversary, vendor = crawl_results(file)
                 if adversary == 'wizard-spider-sandworm':
-                    segmentation, visibility = analyze_graph(df)
-                    seg_dict[vendor] = {'seg':segmentation, 'vis': visibility}
+                    segmentation, visibility, detection = analyze_graph(df)
+                    seg_dict[vendor] = {'seg':segmentation, 'vis': visibility, 'det': detection}
                 if adversary not in vendor_results.keys():
                     vendor_results[adversary] = {}
                 tdf = tdf.append(df, ignore_index=True)

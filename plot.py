@@ -1,11 +1,18 @@
 import matplotlib.pyplot as plt
 
-data = {'ahnlab': {'seg': 3, 'vis': 44}, 'bitdefender': {'seg': 3, 'vis': 47}, 'checkpoint': {'seg': 3, 'vis': 47}, 'cisco': {'seg': 3, 'vis': 45}, 'crowdstrike': {'seg': 3, 'vis': 47}, 'cybereason': {'seg': 3, 'vis': 47}, 'cycraft': {'seg': 3, 'vis': 35}, 'cylance': {'seg': 3, 'vis': 44}, 'cynet': {'seg': 3, 'vis': 47}, 'deepinstinct': {'seg': 7, 'vis': 36}, 'elastic': {'seg': 3, 'vis': 45}, 'eset': {'seg': 3, 'vis': 41}, 'fidelis': {'seg': 3, 'vis': 43}, 'fireeye': {'seg': 3, 'vis': 40}, 'fortinet': {'seg': 3, 'vis': 47}, 'malwarebytes': {'seg': 3, 'vis': 43}, 'mcafee': {'seg': 3, 'vis': 46}, 'microsoft': {'seg': 3, 'vis': 41}, 'paloaltonetworks': {'seg': 3, 'vis': 47}, 'qualys': {'seg': 3, 'vis': 38}, 'rapid7': {'seg': 9, 'vis': 25}, 'reaqta': {'seg': 3, 'vis': 41}, 'sentinelone': {'seg': 3, 'vis': 47}, 'somma': {'seg': 3, 'vis': 38}, 'sophos': {'seg': 3, 'vis': 41}, 'symantec': {'seg': 3, 'vis': 41}, 'trendmicro': {'seg': 3, 'vis': 46}, 'uptycs': {'seg': 3, 'vis': 44}, 'vmware': {'seg': 3, 'vis': 43}, 'withsecure': {'seg': 3, 'vis': 36}}
+data = {'ahnlab': {'seg': 5, 'vis': 76, 'det': 56}, 'bitdefender': {'seg': 6, 'vis': 97, 'det': 97}, 'checkpoint': {'seg': 6, 'vis': 94, 'det': 94}, 'cisco': {'seg': 10, 'vis': 83, 'det': 69}, 'crowdstrike': {'seg': 6, 'vis': 95, 'det': 86}, 'cybereason': {'seg': 6, 'vis': 98, 'det': 97}, 'cycraft': {'seg': 6, 'vis': 73, 'det': 60}, 'cylance': {'seg': 11, 'vis': 83, 'det': 67}, 'cynet': {'seg': 6, 'vis': 96, 'det': 92}, 'deepinstinct': {'seg': 9, 'vis': 60, 'det': 56}, 'elastic': {'seg': 6, 'vis': 89, 'det': 68}, 'eset': {'seg': 5, 'vis': 68, 'det': 64}, 'fidelis': {'seg': 6, 'vis': 88, 'det': 80}, 'fireeye': {'seg': 6, 'vis': 82, 'det': 78}, 'fortinet': {'seg': 5, 'vis': 80, 'det': 79}, 'malwarebytes': {'seg': 5, 'vis': 75, 
+'det': 75}, 'mcafee': {'seg': 6, 'vis': 96, 'det': 79}, 'microsoft': {'seg': 6, 'vis': 87, 'det': 87}, 'paloaltonetworks': {'seg': 6, 'vis': 96, 'det': 96}, 'qualys': {'seg': 5, 'vis': 63, 'det': 49}, 'rapid7': {'seg': 13, 'vis': 59, 'det': 23}, 'reaqta': {'seg': 6, 'vis': 65, 'det': 58}, 'sentinelone': {'seg': 6, 'vis': 97, 'det': 97}, 'somma': {'seg': 5, 'vis': 64, 'det': 28}, 'sophos': {'seg': 6, 'vis': 82, 'det': 64}, 'symantec': {'seg': 6, 'vis': 84, 'det': 79}, 'trendmicro': {'seg': 6, 'vis': 94, 'det': 89}, 'uptycs': {'seg': 6, 'vis': 86, 'det': 77}, 'vmware': {'seg': 6, 'vis': 81, 'det': 53}, 'withsecure': {'seg': 6, 'vis': 78, 'det': 62}}
 
 seg = [data[key]['seg'] for key in data.keys()]
 vis = [data[key]['vis'] for key in data.keys()]
+det = [data[key]['det'] for key in data.keys()]
 
-plt.scatter(seg, vis)
+# plt.scatter(seg, vis)
+# plt.xlabel('seg')
+# plt.ylabel('vis')
+# plt.show()
+
+plt.scatter(seg, det)
 plt.xlabel('seg')
-plt.ylabel('vis')
+plt.ylabel('det')
 plt.show()
