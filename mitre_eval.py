@@ -103,6 +103,7 @@ def crawl_results(filename):
                             ret['Detection_Type'], ' '.join(ret['Modifiers']), i, n
                         pdf = pdf.append(obj, ignore_index=True)
             prot_score = None
+            block_lst = []
             try:
                 blocks = 0
                 tests = 0
@@ -115,6 +116,7 @@ def crawl_results(filename):
                             tests += 1
                             tactic_protections[step['Technique']['Technique_Name']]['Total'] += 1
                         if step['Protection_Type'] == 'Blocked':
+                            block_lst.append(step['Substep'])
                             tactic_protections[step['Technique']['Technique_Name']]['Blocked'] += 1
                             blocks += 1
                 if tests == 0:
@@ -125,7 +127,7 @@ def crawl_results(filename):
                 prot_score = 0
             datasources[rnd][vendor]['Tally'] = tally
             vendor_protections[vendor][rnd] = prot_score
-    return pdf, rnd, vendor
+    return pdf, rnd, vendor, block_lst
 
 def score_df(df, rnd):
     tdf = df[df['Modifiers'].str.contains('Correlated|Tainted', na=False)]
@@ -466,12 +468,14 @@ def run_analysis(filenames):
     if not os.path.exists(os.path.join(os.getcwd(), 'results/vendor_results.json')):
         vendor_results = {}
         seg_dict = {}
+        block_dict = {}
         for file in filenames:
             try:
-                df, adversary, vendor = crawl_results(file)
+                df, adversary, vendor, block_lst = crawl_results(file)
                 if adversary == 'wizard-spider-sandworm':
                     segmentation, visibility, detection = analyze_graph(df)
                     seg_dict[vendor] = {'seg':segmentation, 'vis': visibility, 'det': detection}
+                    block_dict[vendor] = block_lst
                 if adversary not in vendor_results.keys():
                     vendor_results[adversary] = {}
                 tdf = tdf.append(df, ignore_index=True)
@@ -511,7 +515,8 @@ def run_analysis(filenames):
             vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
         with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
-        print(seg_dict)
+        # print(seg_dict)
+        print(block_dict)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
@@ -1025,9 +1030,31 @@ def run_eval():
             technique_set_2.add(t)
             # print(f'adding {t} to the set, size: {len(technique_set_2)}')
     print(f'there are {len(technique_set_2)} techniques in wizard-spider-sandworm')
+    technique_set_3 = set()
+    for tactic in technique_coverage['apt3'].keys():
+        for t in technique_coverage['apt3'][tactic]:
+            technique_set_3.add(t)
+            # print(f'adding {t} to the set, size: {len(technique_set_2)}')
+    print(f'there are {len(technique_set_3)} techniques in apt3')
+    technique_set_4 = set()
+    for tactic in technique_coverage['apt29'].keys():
+        for t in technique_coverage['apt29'][tactic]:
+            technique_set_4.add(t)
+            # print(f'adding {t} to the set, size: {len(technique_set_2)}')
+    print(f'there are {len(technique_set_4)} techniques in apt29')
 
     technique_set = technique_set_1 | technique_set_2
     print(f'there are {len(technique_set)} techniques in two evluations')
+
+    total_technique_set = technique_set_1 | technique_set_2 | technique_set_3 | technique_set_4
+    print(f'there are {len(total_technique_set)} techniques in four evluations')
+
+    vendor_lst = []
+    for adv in vendor_results:
+        for vendor in vendor_results[adv]:
+            if vendor not in vendor_lst:
+                vendor_lst.append(vendor)
+    print(f'there are {len(vendor_lst)} vendors participated in evaluations')
 
     graph_rankings('carbanak-fin7')
     graph_rankings('wizard-spider-sandworm')
