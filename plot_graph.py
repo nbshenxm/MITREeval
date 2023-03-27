@@ -131,27 +131,43 @@ for vendor, block_lst in block_dict.items():
                 sub_dict[vendor]['wizard_spider'] = []
             idx = wizard_spider_dict[b]
             if idx < 17:
-                sub_lst = [x for x in range(0, idx)]
+                sub_lst = [x for x in range(0, idx+1)]
             elif idx < 33:
-                sub_lst = [x for x in range(17, idx)]
+                sub_lst = [x for x in range(17, idx+1)]
             else:
-                sub_lst = [x for x in range(33, idx)]
+                sub_lst = [x for x in range(33, idx+1)]
             sub_dict[vendor]['wizard_spider'].append(sub_lst)
         elif b in sandworm_dict.keys():
             if 'sandworm' not in sub_dict[vendor].keys():
                 sub_dict[vendor]['sandworm'] = []
             idx = sandworm_dict[b]
             if idx < 19:
-                sub_lst = [x for x in range(0, idx)]
+                sub_lst = [x for x in range(0, idx+1)]
             elif idx < 42:
-                sub_lst = [x for x in range(19, idx)]
+                sub_lst = [x for x in range(19, idx+1)]
             else:
-                sub_lst = [x for x in range(42, idx)]
+                sub_lst = [x for x in range(42, idx+1)]
             sub_dict[vendor]['sandworm'].append(sub_lst)
         else:
             print('something weird happened')
             print(b)
-print(sub_dict)
+# print(sub_dict)
+freq_dict = {}
+for vendor, eval_dict in sub_dict.items():
+    for eval, sub_lst in eval_dict.items():
+        if eval not in freq_dict.keys():
+            freq_dict[eval] = {}
+        for sub in sub_lst:
+            if str(sub) not in freq_dict[eval].keys():
+                freq_dict[eval][str(sub)] = 1
+            else:
+                freq_dict[eval][str(sub)] += 1
+# print(freq_dict)
+sorted_freq_dict = {}
+for eval, eval_dict in freq_dict.items():
+    sorted_freq_dict[eval] = {k: v for k, v in sorted(eval_dict.items(), key=lambda item: item[1])}
+# sorted_freq_dict = {k: v for k, v in sorted(freq_dict.items(), key=lambda item: item[1])}
+print(sorted_freq_dict)
 
 # Create a graph
 G_sandworm = nx.Graph()
