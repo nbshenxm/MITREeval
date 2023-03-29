@@ -101,7 +101,8 @@ def crawl_results(filename):
                             n = 'N/A'
                         obj['Detection'], obj['Modifiers'], obj['Indicator'], obj['IndicatorName'] = \
                             ret['Detection_Type'], ' '.join(ret['Modifiers']), i, n
-                        pdf = pdf.append(obj, ignore_index=True)
+                        new_row = pd.DataFrame([obj])
+                        pdf = pd.concat([pdf.loc[:], new_row]).reset_index(drop=True)
             prot_score = None
             block_lst = []
             try:
@@ -463,7 +464,7 @@ def analyze_graph(df):
     # print(miss)
     # print(connection)
     # print(len(connection))
-    return len(cc), len(exist), len(above_tel), not_supported
+    return cc, exist, above_tel, not_supported
 
 
 def run_analysis(filenames):
@@ -483,7 +484,8 @@ def run_analysis(filenames):
                     not_supported_dict[vendor] = not_supported
                 if adversary not in vendor_results.keys():
                     vendor_results[adversary] = {}
-                tdf = tdf.append(df, ignore_index=True)
+                tdf = pd.concat([tdf.loc[:], df]).reset_index(drop=True)
+                # tdf = tdf.append(df, ignore_index=True)
                 visibility, analytics, quality, confidence = query_df(df, adversary, 'Vendor', vendor)
                 g = None
                 g_v = None
@@ -520,9 +522,9 @@ def run_analysis(filenames):
             vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
         with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
-        # print(seg_dict)
-        print(block_dict)
-        print(not_supported_dict)
+        print(seg_dict)
+        # print(block_dict)
+        # print(not_supported_dict)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
