@@ -75,7 +75,7 @@ def crawl_results(filename):
                         obj['TechniqueId'] = substep['Technique']['Technique_Id']
                         obj['TechniqueName'] = technique
                         obj['SubtechniqueId'] = substep['Subtechnique']['Subtechnique_Id']
-                        ret = {'Detection_Type':'None', 'Modifiers':'', 'Indicator':'', 'Indicator_Name':''} 
+                        ret = {'Detection_Type':'N/A', 'Modifiers':'', 'Indicator':'', 'Indicator_Name':''} 
                         dt = Enum('DetectionTypes', detection_types[rnd])
                         for detection in detections:
                             detection_type = detection['Detection_Type'].replace(' ', '')
@@ -409,6 +409,7 @@ def analyze_graph(df):
     miss = []
     wizard_spider_skip = [4, 10, 18, 21, 34]
     sandworm_skip = [1, 12, 13, 20, 28, 43]
+    not_supported = []
 
     for index, row in df.iterrows():
         detection = row["Detection"]
@@ -426,7 +427,9 @@ def analyze_graph(df):
         if (idx in wizard_spider_skip) or (idx-52 in sandworm_skip):
             print("skipping...")
             continue
-        if detection != 'None':
+        if detection == 'N/A':
+            not_supported.append(substep)
+        elif detection != 'None':
             if idx < 52:
                 # print("idx in wizard_spider")
                 exist[idx] = wizard_spider_connectivity[idx]
@@ -460,7 +463,7 @@ def analyze_graph(df):
     # print(miss)
     # print(connection)
     # print(len(connection))
-    return len(cc), len(exist), len(above_tel)
+    return len(cc), len(exist), len(above_tel), not_supported
 
 
 def run_analysis(filenames):
@@ -469,13 +472,15 @@ def run_analysis(filenames):
         vendor_results = {}
         seg_dict = {}
         block_dict = {}
+        not_supported_dict = {}
         for file in filenames:
             try:
                 df, adversary, vendor, block_lst = crawl_results(file)
                 if adversary == 'wizard-spider-sandworm':
-                    segmentation, visibility, detection = analyze_graph(df)
+                    segmentation, visibility, detection, not_supported = analyze_graph(df)
                     seg_dict[vendor] = {'seg':segmentation, 'vis': visibility, 'det': detection}
                     block_dict[vendor] = block_lst
+                    not_supported_dict[vendor] = not_supported
                 if adversary not in vendor_results.keys():
                     vendor_results[adversary] = {}
                 tdf = tdf.append(df, ignore_index=True)
@@ -517,6 +522,7 @@ def run_analysis(filenames):
             json.dump(vendor_results, fp, indent=4)
         # print(seg_dict)
         print(block_dict)
+        print(not_supported_dict)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)

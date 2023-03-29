@@ -121,10 +121,15 @@ block_dict = {'ahnlab': ['1.A.4', '4.A.3', '10.A.1', '15.A.4', '18.A.4'], 'bitde
 wizard_spider_dict = {'1.A.1': 0, '1.A.2': 1, '1.A.3': 2, '1.A.4': 3, '1.A.5': 4, '1.A.6': 5, '1.A.7': 6, '1.A.8': 7, '1.A.9': 8, '1.A.10': 9, '1.A.11': 10, '2.A.1': 11, '3.A.1': 12, '3.A.2': 13, '3.A.3': 14, '3.A.4': 15, '3.A.5': 16, '4.A.1': 17, '4.A.2': 18, '4.A.3': 19, '4.A.4': 20, '4.A.5': 21, '5.A.1': 22, '5.A.2': 23, '5.A.3': 24, '5.A.4': 25, '5.A.5': 26, '5.A.6': 27, '5.A.7': 28, '5.A.8': 29, '5.A.9': 30, '6.A.1': 31, '6.A.2': 32, '7.A.1': 33, '7.A.2': 34, '7.A.3': 35, '7.A.4': 36, '7.A.5': 37, '8.A.1': 38, '8.A.2': 39, '9.A.1': 40, '9.A.2': 41, '9.A.3': 42, '9.A.4': 43, '9.A.5': 44, '10.A.1': 45, '10.A.2': 46, '10.A.3': 47, '10.A.4': 48, '10.A.5': 49, '10.A.6': 50, '10.A.7': 51}
 sandworm_dict = {'11.A.1': 0, '11.A.2': 1, '11.A.3': 2, '11.A.4': 3, '12.A.1': 4, '12.A.2': 5, '12.A.3': 6, '12.A.4': 7, '12.A.5': 8, '13.A.1': 9, '13.A.2': 10, '13.A.3': 11, '13.A.4': 12, '13.A.5': 13, '14.A.1': 14, '14.A.2': 15, '14.A.3': 16, '14.A.4': 17, '14.A.5': 18, '15.A.1': 19, '15.A.2': 20, '15.A.3': 21, '15.A.4': 22, '15.A.5': 23, '15.A.6': 24, '15.A.7': 25, '15.A.8': 26, '15.A.9': 27, '15.A.10': 28, '16.A.1': 29, '16.A.2': 30, '16.A.3': 31, '16.A.4': 32, '16.A.5': 33, '17.A.1': 34, '17.A.2': 35, '17.A.3': 36, '17.A.4': 37, '17.A.5': 38, '17.A.6': 39, '17.A.7': 40, '17.A.8': 41, '18.A.1': 42, '18.A.2': 43, '18.A.3': 44, '18.A.4': 45, '19.A.1': 46, '19.A.2': 47, '19.A.3': 48, '19.A.4': 49, '19.A.5': 50, '19.A.6': 51, '19.A.7': 52, '19.A.8': 53, '19.A.9': 54, '19.A.10': 55, '19.A.11': 56}
 sub_dict = {}
+not_linux_dict = {'ahnlab': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'bitdefender': [], 'checkpoint': [], 'cisco': [], 'crowdstrike': [], 'cybereason': [], 'cycraft': [], 'cylance': [], 'cynet': [], 'deepinstinct': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'elastic': [], 'eset': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'fidelis': [], 'fireeye': [], 'fortinet': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'malwarebytes': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'mcafee': [], 'microsoft': [], 'paloaltonetworks': [], 'qualys': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'rapid7': [], 'reaqta': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'sentinelone': [], 'somma': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5'], 'sophos': [], 'symantec': [], 'trendmicro': [], 'uptycs': [], 'vmware': [], 'withsecure': []}
+not_support_lst = []
+not_linux_vendor_lst = []
 
 for vendor, block_lst in block_dict.items():
     if vendor not in sub_dict.keys():
         sub_dict[vendor] = {}
+    if len(block_lst) == 0:
+        not_support_lst.append(vendor)
     for b in block_lst:
         if b in wizard_spider_dict.keys():
             if 'wizard_spider' not in sub_dict[vendor].keys():
@@ -167,7 +172,14 @@ sorted_freq_dict = {}
 for eval, eval_dict in freq_dict.items():
     sorted_freq_dict[eval] = {k: v for k, v in sorted(eval_dict.items(), key=lambda item: item[1])}
 # sorted_freq_dict = {k: v for k, v in sorted(freq_dict.items(), key=lambda item: item[1])}
-print(sorted_freq_dict)
+print(f'There are {len(block_dict)} vendors in Wizard Spider + Sandworm evaluation')
+print(f'{len(not_support_lst)} vendors doesn\'t participate in the protection test')
+# print(sorted_freq_dict)
+
+for vendor, lst in not_linux_dict.items():
+    if len(lst) != 0:
+        not_linux_vendor_lst.append(vendor)
+print(f'There are {len(not_linux_vendor_lst)} vendors does not support Linux platform')
 
 # Create a graph
 G_sandworm = nx.Graph()
@@ -197,5 +209,5 @@ nx.draw_networkx_nodes(G_sandworm.subgraph([0, 19, 42]), pos, node_color='red', 
 # nx.draw(G, pos)
 
 
-plt.axis("off")
-plt.show()
+# plt.axis("off")
+# plt.show()
