@@ -17,15 +17,23 @@ def count_datapoints(json_obj):
 
 folder_path = "json/"
 total_datapoints = 0
+vendor_dp_dict = {}
 
 for root, dirs, files in os.walk(folder_path):
     for file in files:
         if file.endswith(".json"):
+            vendor = file.split("_")[1]
+            # print(vendor)
             file_path = os.path.join(root, file)
             with open(file_path, "r") as f:
                 json_obj = json.load(f)
                 datapoints = count_datapoints(json_obj)
-                print(f"{file_path}: {datapoints} datapoints")
+                if vendor not in vendor_dp_dict.keys():
+                    vendor_dp_dict[vendor] = datapoints
+                else:
+                    vendor_dp_dict[vendor] += datapoints
+                # print(f"{file_path}: {datapoints} datapoints")
                 total_datapoints += datapoints
-
+for vendor, dp in vendor_dp_dict.items():
+    print(f'{vendor}: {dp} datapoints')
 print(f"Total datapoints: {total_datapoints}")
