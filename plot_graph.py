@@ -140,8 +140,14 @@ for vendor, block_lst in block_dict.items():
                 sub_lst = [x for x in range(0, idx+1)]
             elif idx < 33:
                 sub_lst = [x for x in range(17, idx+1)]
-            else:
+            elif idx < 38:
                 sub_lst = [x for x in range(33, idx+1)]
+            elif idx < 40:
+                sub_lst = [x for x in range(38, idx+1)]
+            elif idx < 45:
+                sub_lst = [x for x in range(40, idx+1)]
+            else:
+                sub_lst = [x for x in range(45, idx+1)]
             sub_dict[vendor]['wizard_spider'].append(sub_lst)
         elif b in sandworm_dict.keys():
             if 'sandworm' not in sub_dict[vendor].keys():
@@ -175,7 +181,7 @@ for eval, eval_dict in freq_dict.items():
 # sorted_freq_dict = {k: v for k, v in sorted(freq_dict.items(), key=lambda item: item[1])}
 print(f'There are {len(block_dict)} vendors in Wizard Spider + Sandworm evaluation')
 print(f'{len(not_support_lst)} vendors doesn\'t participate in the protection test')
-# print(sorted_freq_dict)
+print(sorted_freq_dict)
 
 for vendor, lst in not_linux_dict.items():
     if len(lst) != 0:
