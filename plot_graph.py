@@ -128,6 +128,18 @@ not_linux_vendor_lst = []
 
 prot_cc_dict = {}
 cc_dict = {}
+cc_range = [(0,16),(17,32),(33,51),(52,68),(69,93),(94,108)]
+prot_range = [(0,16),(17,32),(33,37),(38,39),(40,44),(45,51),(52,68),(69,93),(94,108)]
+
+def find_overlaps(large_range, ranges):
+    overlaps = []
+    for r in ranges:
+        if r[1] >= large_range[0] and r[0] <= large_range[1]:
+            start = max(r[0], large_range[0])
+            end = min(r[1], large_range[1])
+            overlaps.append((start, end))
+    return overlaps
+
 for vendor, vendor_dict in seg_dict.items():
     if vendor not in cc_dict.keys():
         prot_cc_dict[vendor] = [0,0,0,0,0,0,0,0,0]
@@ -135,6 +147,9 @@ for vendor, vendor_dict in seg_dict.items():
     cc = seg_dict[vendor]['seg']
     for subgraph in cc:
         first_element = subgraph[0]
+        last_element = subgraph[-1]
+        # for r in cc_range:
+
         if first_element in range(0, 17):
             prot_cc_dict[vendor][0] += 1
             cc_dict[vendor][0] += 1
@@ -143,22 +158,20 @@ for vendor, vendor_dict in seg_dict.items():
             prot_cc_dict[vendor][1] += 1
             cc_dict[vendor][1] += 1
             # print("The first element is in the range 17-32 (protection test 2)")
-        elif first_element in range(33, 38):
-            prot_cc_dict[vendor][2] += 1
+        elif first_element in range(33, 52):
             cc_dict[vendor][2] += 1
-            # print("The first element is in the range 33-37 (protection test 3)")
-        elif first_element in range(38, 40):
-            prot_cc_dict[vendor][3] += 1
-            cc_dict[vendor][2] += 1
-            # print("The first element is in the range 38-39 (protection test 4)")
-        elif first_element in range(40, 45):
-            prot_cc_dict[vendor][4] += 1
-            cc_dict[vendor][2] += 1
-            # print("The first element is in the range 40-44 (protection test 5)")
-        elif first_element in range(45, 52):
-            prot_cc_dict[vendor][5] += 1
-            cc_dict[vendor][2] += 1
-            # print("The first element is in the range 45-51 (protection test 6)")
+            if last_element in range(33, 38):
+                prot_cc_dict[vendor][2] += 1
+                # print("The first element is in the range 33-37 (protection test 3)")
+            elif last_element in range(38, 40):
+                prot_cc_dict[vendor][3] += 1
+                # print("The first element is in the range 38-39 (protection test 4)")
+            elif last_element in range(40, 45):
+                prot_cc_dict[vendor][4] += 1
+                # print("The first element is in the range 40-44 (protection test 5)")
+            elif last_element in range(45, 52):
+                prot_cc_dict[vendor][5] += 1
+                # print("The first element is in the range 45-51 (protection test 6)")
         elif first_element in range(52, 69):
             prot_cc_dict[vendor][6] += 1
             cc_dict[vendor][3] += 1
