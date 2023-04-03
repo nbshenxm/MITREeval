@@ -126,6 +126,65 @@ not_linux_dict = {'ahnlab': ['11.A.1', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '
 not_support_lst = []
 not_linux_vendor_lst = []
 
+prot_cc_dict = {}
+cc_dict = {}
+for vendor, vendor_dict in seg_dict.items():
+    if vendor not in cc_dict.keys():
+        prot_cc_dict[vendor] = [0,0,0,0,0,0,0,0,0]
+        cc_dict[vendor] = [0,0,0,0,0,0]
+    cc = seg_dict[vendor]['seg']
+    for subgraph in cc:
+        first_element = subgraph[0]
+        if first_element in range(0, 17):
+            prot_cc_dict[vendor][0] += 1
+            cc_dict[vendor][0] += 1
+            # print("The first element is in the range 0-16 (protection test 1)")
+        elif first_element in range(17, 33):
+            prot_cc_dict[vendor][1] += 1
+            cc_dict[vendor][1] += 1
+            # print("The first element is in the range 17-32 (protection test 2)")
+        elif first_element in range(33, 38):
+            prot_cc_dict[vendor][2] += 1
+            cc_dict[vendor][2] += 1
+            # print("The first element is in the range 33-37 (protection test 3)")
+        elif first_element in range(38, 40):
+            prot_cc_dict[vendor][3] += 1
+            cc_dict[vendor][2] += 1
+            # print("The first element is in the range 38-39 (protection test 4)")
+        elif first_element in range(40, 45):
+            prot_cc_dict[vendor][4] += 1
+            cc_dict[vendor][2] += 1
+            # print("The first element is in the range 40-44 (protection test 5)")
+        elif first_element in range(45, 52):
+            prot_cc_dict[vendor][5] += 1
+            cc_dict[vendor][2] += 1
+            # print("The first element is in the range 45-51 (protection test 6)")
+        elif first_element in range(52, 69):
+            prot_cc_dict[vendor][6] += 1
+            cc_dict[vendor][3] += 1
+            # print("The first element is in the range 52-68 (protection test 7)")
+        elif first_element in range(69, 94):
+            prot_cc_dict[vendor][7] += 1
+            cc_dict[vendor][4] += 1
+            # print("The first element is in the range 69-93 (protection test 8)")
+        elif first_element in range(94, 109):
+            prot_cc_dict[vendor][8] += 1
+            cc_dict[vendor][5] += 1
+            # print("The first element is in the range 94-108 (protection test 9)")
+        else:
+            print("The first element is not in any of the specified ranges")
+print("connectivity of the 6 hosts")
+print(cc_dict)
+counter = 0
+for lst in cc_dict.values():
+    if lst == [1,1,1,1,1,1] or lst == [1,1,1,0,1,1]:
+        counter += 1
+print(f'{counter} vendors have complete connectivity')
+print("connectivity of the 9 protection tests")
+print(prot_cc_dict)
+
+prot_count_dict = {'wizard_spider':[0,0,0,0,0,0], 'sandworm':[0,0,0]}
+
 for vendor, block_lst in block_dict.items():
     if vendor not in sub_dict.keys():
         sub_dict[vendor] = {}
@@ -138,16 +197,22 @@ for vendor, block_lst in block_dict.items():
             idx = wizard_spider_dict[b]
             if idx < 17:
                 sub_lst = [x for x in range(0, idx+1)]
+                prot_count_dict['wizard_spider'][0] += 1
             elif idx < 33:
                 sub_lst = [x for x in range(17, idx+1)]
+                prot_count_dict['wizard_spider'][1] += 1
             elif idx < 38:
                 sub_lst = [x for x in range(33, idx+1)]
+                prot_count_dict['wizard_spider'][2] += 1
             elif idx < 40:
                 sub_lst = [x for x in range(38, idx+1)]
+                prot_count_dict['wizard_spider'][3] += 1
             elif idx < 45:
                 sub_lst = [x for x in range(40, idx+1)]
+                prot_count_dict['wizard_spider'][4] += 1
             else:
                 sub_lst = [x for x in range(45, idx+1)]
+                prot_count_dict['wizard_spider'][5] += 1
             sub_dict[vendor]['wizard_spider'].append(sub_lst)
         elif b in sandworm_dict.keys():
             if 'sandworm' not in sub_dict[vendor].keys():
@@ -155,14 +220,19 @@ for vendor, block_lst in block_dict.items():
             idx = sandworm_dict[b]
             if idx < 19:
                 sub_lst = [x for x in range(0, idx+1)]
+                prot_count_dict['sandworm'][0] += 1
             elif idx < 42:
                 sub_lst = [x for x in range(19, idx+1)]
+                prot_count_dict['sandworm'][1] += 1
             else:
                 sub_lst = [x for x in range(42, idx+1)]
+                prot_count_dict['sandworm'][2] += 1
             sub_dict[vendor]['sandworm'].append(sub_lst)
         else:
             print('something weird happened')
             print(b)
+print('number of blockage in each protection test')
+print(prot_count_dict)
 # print(sub_dict)
 freq_dict = {}
 for vendor, eval_dict in sub_dict.items():
@@ -187,6 +257,13 @@ for vendor, lst in not_linux_dict.items():
     if len(lst) != 0:
         not_linux_vendor_lst.append(vendor)
 print(f'There are {len(not_linux_vendor_lst)} vendors does not support Linux platform')
+
+print('These vendors don\'t support Linux and don\'t participate in protection tests')
+common_elements = []
+for element in not_linux_vendor_lst:
+    if element in not_support_lst:
+        common_elements.append(element)
+print(common_elements)
 
 for vendor in not_linux_vendor_lst:
     cc = seg_dict[vendor]['seg']
