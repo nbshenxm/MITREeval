@@ -146,8 +146,9 @@ for vendor, vendor_dict in seg_dict.items():
         cc_dict[vendor] = [0,0,0,0,0,0]
     cc = seg_dict[vendor]['seg']
     for subgraph in cc:
-        first_element = subgraph[0]
-        last_element = subgraph[-1]
+        sorted_subgraph = sorted(subgraph)
+        first_element = sorted_subgraph[0]
+        last_element = sorted_subgraph[-1]
         # for r in cc_range:
 
         if first_element in range(0, 17):
@@ -160,16 +161,16 @@ for vendor, vendor_dict in seg_dict.items():
             # print("The first element is in the range 17-32 (protection test 2)")
         elif first_element in range(33, 52):
             cc_dict[vendor][2] += 1
-            if last_element in range(33, 38):
+            if last_element >= 33:
                 prot_cc_dict[vendor][2] += 1
                 # print("The first element is in the range 33-37 (protection test 3)")
-            elif last_element in range(38, 40):
+            if last_element >= 38:
                 prot_cc_dict[vendor][3] += 1
                 # print("The first element is in the range 38-39 (protection test 4)")
-            elif last_element in range(40, 45):
+            if last_element >= 40:
                 prot_cc_dict[vendor][4] += 1
                 # print("The first element is in the range 40-44 (protection test 5)")
-            elif last_element in range(45, 52):
+            if last_element >= 45:
                 prot_cc_dict[vendor][5] += 1
                 # print("The first element is in the range 45-51 (protection test 6)")
         elif first_element in range(52, 69):
