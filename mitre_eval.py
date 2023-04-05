@@ -77,18 +77,26 @@ def crawl_results(filename):
                         obj['SubtechniqueId'] = substep['Subtechnique']['Subtechnique_Id']
                         ret = {'Detection_Type':'N/A', 'Modifiers':'', 'Indicator':'', 'Indicator_Name':''} 
                         dt = Enum('DetectionTypes', detection_types[rnd])
+                        if substep['Substep'] not in datasources[rnd].keys():
+                            datasources[rnd][substep['Substep']] = {}
                         for detection in detections:
                             detection_type = detection['Detection_Type'].replace(' ', '')
                             if dt[ret['Detection_Type'].replace(' ', '')].value < dt[detection_type].value:
                                 ret = detection
-                            if vendor not in datasources[rnd].keys():
-                                datasources[rnd][vendor] = {}
+                            # if vendor not in datasources[rnd].keys():
+                            #     datasources[rnd][vendor] = {}
                             try:
                                 for source in detection['Data_Sources']:
                                     try:
-                                        datasources[rnd][vendor][source] += 1
+                                        datasources[rnd][substep['Substep']][source] += 1
                                     except KeyError:
-                                        datasources[rnd][vendor][source] = 1
+                                        datasources[rnd][substep['Substep']][source] = 1
+                                for item in detection['Screenshots']:
+                                    for source in item['Data_Sources']:
+                                        try:
+                                            datasources[rnd][substep['Substep']][source] += 1
+                                        except KeyError:
+                                            datasources[rnd][substep['Substep']][source] = 1
                             except KeyError:
                                 pass
                         try:
@@ -126,7 +134,7 @@ def crawl_results(filename):
                     prot_score = blocks/tests
             except KeyError:
                 prot_score = 0
-            datasources[rnd][vendor]['Tally'] = tally
+            # datasources[rnd][vendor]['Tally'] = tally
             vendor_protections[vendor][rnd] = prot_score
     return pdf, rnd, vendor, block_lst
 
@@ -168,6 +176,7 @@ def score_df(df, rnd):
             if content['Modifiers'].find('Delayed') == -1 and content['Modifiers'].find('Configuration Change') == -1:
                 quality += 1
     cdf = df[df['Modifiers'].str.contains('Delayed|Configuration Change', na=False)]
+    print(cdf['Modifiers'].unique())
     badcounts = cdf.Detection.value_counts()
     try:
         bna = badcounts['N/A']
@@ -223,9 +232,9 @@ def score_df(df, rnd):
             telemetry = 0
         confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps
 
-    visibility /= substeps
+    # visibility /= substeps
         
-    return visibility, analytics, quality, confidence
+    return visibility, techniques, substeps, confidence
 
 def query_df(pdf, rnd, mode, query):
     df = pdf[(pdf[mode] == query) & (pdf['Adversary'] == rnd)]
@@ -506,20 +515,21 @@ def run_analysis(filenames):
                         g_q = grade
                     if pct_c >= low and pct_c <= high:
                         g_c = grade
-                if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
-                    tally = datasources[adversary][vendor]['Tally']
-                    availability = (sum(datasources[adversary][vendor].values()) - tally)/tally
-                    vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
-                else:
-                    vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
+                # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
+                #     tally = datasources[adversary][vendor]['Tally']
+                #     availability = (sum(datasources[adversary][vendor].values()) - tally)/tally
+                #     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
+                # else:
+                vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
             except Exception as e:
                 print(e)
+        
         max_ = 0
-        for vendor in vendor_results['carbanak-fin7'].keys():
-            if vendor_results['carbanak-fin7'][vendor]['Availability'] > max_:
-                max_ = vendor_results['carbanak-fin7'][vendor]['Availability']
-        for vendor in vendor_results['carbanak-fin7'].keys():
-            vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
+        # for vendor in vendor_results['carbanak-fin7'].keys():
+        #     if vendor_results['carbanak-fin7'][vendor]['Availability'] > max_:
+        #         max_ = vendor_results['carbanak-fin7'][vendor]['Availability']
+        # for vendor in vendor_results['carbanak-fin7'].keys():
+        #     vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
         with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
         print(seg_dict)
