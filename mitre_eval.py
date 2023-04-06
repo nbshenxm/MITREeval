@@ -13,8 +13,8 @@ import seaborn as sns
 from graph import Graph
 
 try:
-    os.remove('results/tactic_results.json')
     os.remove('results/vendor_results.json')
+    os.remove('results/tactic_results.json')
     print("Deleting old result files...")
 except:
     pass
@@ -952,101 +952,114 @@ def run_eval():
     vendor_results, tactic_results, vendor_protections = run_analysis(filenames)
     rankings = {}
     for adversary in vendor_results.keys():
-        ranking = make_vendor_ranking(vendor_results, adversary)
-        rankings[adversary] = ranking
+        # ranking = make_vendor_ranking(vendor_results, adversary)
+        # rankings[adversary] = ranking
         with open(f'results/{adversary}_vendor_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
-            if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
-                writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
-                rs = []
-                vs = []
-                us = []
-                for vendor in ranking.keys():
-                    vs.append(vendor)
-                    rs.append(ranking[vendor]['Unweighted'])
-                vs, rs = [list(t) for t in zip(*sorted(zip(vs, rs), key=lambda x: x[1]))]
-                scores = zip(reversed(vs), reversed(rs))
-                for item in scores:
-                    if vendor_results[adversary][item[0]]['Protection'] == 'N/A':
-                        prot = 0
-                    else:
-                        prot = vendor_results[adversary][item[0]]['Protection']
-                    visibility = vendor_results[adversary][item[0]]['Visibility']
-                    analytics = vendor_results[adversary][item[0]]['Analytics']
-                    confidence = vendor_results[adversary][item[0]]['Confidence']/4
-                    quality = vendor_results[adversary][item[0]]['Quality']
-                    det_score = (.3 * visibility)+ (.175 * analytics) + (.175 * confidence) + (.175 * quality) + (.175 * prot)
-                    corr_score = (.2 * visibility)+ (.25 * analytics) + (.25 * confidence) + (.20 * quality) + (.10 * prot)
-                    auto_score = (.2 * visibility)+ (.15 * analytics) + (.15 * confidence) + (.25 * quality) + (.25 * prot)
-                    try:
-                        writer.writerow([item[0], "%.3f" % item[1], "%.3f" % det_score, "%.3f" % corr_score, "%.3f" % auto_score, "%.3f" % vendor_results[adversary][item[0]]['Visibility'], "%.3f" % vendor_results[adversary][item[0]]['Analytics'],"%.3f" % (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" % vendor_results[adversary][item[0]]['Quality'], "%.3f" % prot])
-                    except Exception as e:
-                        print(e)
-            else:
-                writer.writerow(['Vendor', 'Unweighted Score', 'Visibility', 'Analytics', 'Confidence', 'Quality'])
-                rs = []
-                vs = []
-                for vendor in ranking.keys():
-                    vs.append(vendor)
-                    rs.append(ranking[vendor]['Unweighted'])
-                vs, rs = [list(t) for t in zip(*sorted(zip(vs, rs), key=lambda x: x[1]))]
-                scores = zip(reversed(vs), reversed(rs))
-                for item in scores:
-                    try:
-                        writer.writerow([item[0], "%.3f" % item[1], "%.3f" %  vendor_results[adversary][item[0]]['Visibility'], "%.3f" %  vendor_results[adversary][item[0]]['Analytics'],"%.3f" %  (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" %  vendor_results[adversary][item[0]]['Quality']])
-                    except:
-                        pass
+            writer.writerow(['Vendor', 'Visibility', 'Detection', 'Substeps'])
+            for vendor, vendor_dict in vendor_results[adversary].items():
+                try:
+                    writer.writerow([vendor, "%.3f" % vendor_dict['Visibility'], "%.3f" %  vendor_dict['Detection'], "%.3f" %  vendor_dict['Substeps']])
+                except Exception as e:
+                    print(e)
+            # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
+            #     writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
+            #     rs = []
+            #     vs = []
+            #     us = []
+            #     for vendor in ranking.keys():
+            #         vs.append(vendor)
+            #         rs.append(ranking[vendor]['Unweighted'])
+            #     vs, rs = [list(t) for t in zip(*sorted(zip(vs, rs), key=lambda x: x[1]))]
+            #     scores = zip(reversed(vs), reversed(rs))
+            #     for item in scores:
+            #         if vendor_results[adversary][item[0]]['Protection'] == 'N/A':
+            #             prot = 0
+            #         else:
+            #             prot = vendor_results[adversary][item[0]]['Protection']
+            #         visibility = vendor_results[adversary][item[0]]['Visibility']
+            #         analytics = vendor_results[adversary][item[0]]['Analytics']
+            #         confidence = vendor_results[adversary][item[0]]['Confidence']/4
+            #         quality = vendor_results[adversary][item[0]]['Quality']
+            #         det_score = (.3 * visibility)+ (.175 * analytics) + (.175 * confidence) + (.175 * quality) + (.175 * prot)
+            #         corr_score = (.2 * visibility)+ (.25 * analytics) + (.25 * confidence) + (.20 * quality) + (.10 * prot)
+            #         auto_score = (.2 * visibility)+ (.15 * analytics) + (.15 * confidence) + (.25 * quality) + (.25 * prot)
+            #         try:
+            #             writer.writerow([item[0], "%.3f" % item[1], "%.3f" % det_score, "%.3f" % corr_score, "%.3f" % auto_score, "%.3f" % vendor_results[adversary][item[0]]['Visibility'], "%.3f" % vendor_results[adversary][item[0]]['Analytics'],"%.3f" % (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" % vendor_results[adversary][item[0]]['Quality'], "%.3f" % prot])
+                    # except Exception as e:
+                    #     print(e)
+            # else:
+            #     writer.writerow(['Vendor', 'Unweighted Score', 'Visibility', 'Analytics', 'Confidence', 'Quality'])
+            #     rs = []
+            #     vs = []
+            #     for vendor in ranking.keys():
+            #         vs.append(vendor)
+            #         rs.append(ranking[vendor]['Unweighted'])
+            #     vs, rs = [list(t) for t in zip(*sorted(zip(vs, rs), key=lambda x: x[1]))]
+            #     scores = zip(reversed(vs), reversed(rs))
+            #     for item in scores:
+            #         try:
+            #             writer.writerow([item[0], "%.3f" % item[1], "%.3f" %  vendor_results[adversary][item[0]]['Visibility'], "%.3f" %  vendor_results[adversary][item[0]]['Analytics'],"%.3f" %  (vendor_results[adversary][item[0]]['Confidence']/4), "%.3f" %  vendor_results[adversary][item[0]]['Quality']])
+            #         except:
+            #             pass
     
     for adversary in tactic_results.keys():
-        ranking = make_technique_ranking(tactic_results, adversary)
-        rankings[adversary] = ranking
+        # ranking = make_technique_ranking(tactic_results, adversary)
+        # rankings[adversary] = ranking
         with open(f'results/{adversary}_technique_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
-            if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
-                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
-                rs = []
-                ts = []
-                us = []
-                for tactic in ranking.keys():
-                    for technique in ranking[tactic].keys():
-                        us.append(tactic)
-                        ts.append(technique)
-                        rs.append(ranking[tactic][technique]['Unweighted'])
-                us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
-                scores = zip(reversed(us), reversed(ts), reversed(rs))
-                for item in scores:
-                    if tactic_results[adversary][item[0]][item[1]]['Protection'] == 'N/A':
-                        prot = 0
-                    else:
-                        prot = tactic_results[adversary][item[0]][item[1]]['Protection']
-                    visibility = tactic_results[adversary][item[0]][item[1]]['Visibility']
-                    analytics = tactic_results[adversary][item[0]][item[1]]['Analytics']
-                    confidence = tactic_results[adversary][item[0]][item[1]]['Confidence']/4
-                    quality = tactic_results[adversary][item[0]][item[1]]['Quality']
-                    det_score = (.3 * visibility)+ (.175 * analytics) + (.175 * confidence) + (.175 * quality) + (.175 * prot)
-                    corr_score = (.2 * visibility)+ (.25 * analytics) + (.25 * confidence) + (.20 * quality) + (.10 * prot)
-                    auto_score = (.2 * visibility)+ (.15 * analytics) + (.15 * confidence) + (.25 * quality) + (.25 * prot)
+            writer.writerow(['Tactic', 'Technique', 'Visibility', 'Detection', 'Substeps'])
+            for tactic in tactic_results[adversary].keys():
+                for technique, technique_dict in tactic_results[adversary][tactic].items():
                     try:
-                        writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" % det_score, "%.3f" % corr_score, "%.3f" % auto_score, "%.3f" % tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" % tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" % (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" % tactic_results[adversary][item[0]][item[1]]['Quality'], "%.3f" % prot])
+                        writer.writerow([tactic, technique, "%.3f" % technique_dict['Visibility'], "%.3f" %  technique_dict['Detection'], "%.3f" %  technique_dict['Substeps']])
                     except Exception as e:
                         print(e)
-            else:
-                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Visibility', 'Analytics', 'Confidence', 'Quality'])
-                rs = []
-                ts = []
-                us = []
-                for tactic in ranking.keys():
-                    for technique in ranking[tactic].keys():
-                        us.append(tactic)
-                        ts.append(technique)
-                        rs.append(ranking[tactic][technique]['Unweighted'])
-                us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
-                scores = zip(reversed(us), reversed(ts), reversed(rs))
-                for item in scores:
-                    try:
-                        writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" %  (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Quality']])
-                    except:
-                        pass
+            # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
+            #     writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
+            #     rs = []
+            #     ts = []
+            #     us = []
+            #     for tactic in ranking.keys():
+            #         for technique in ranking[tactic].keys():
+            #             us.append(tactic)
+            #             ts.append(technique)
+            #             rs.append(ranking[tactic][technique]['Unweighted'])
+            #     us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
+            #     scores = zip(reversed(us), reversed(ts), reversed(rs))
+            #     for item in scores:
+            #         if tactic_results[adversary][item[0]][item[1]]['Protection'] == 'N/A':
+            #             prot = 0
+            #         else:
+            #             prot = tactic_results[adversary][item[0]][item[1]]['Protection']
+            #         visibility = tactic_results[adversary][item[0]][item[1]]['Visibility']
+            #         analytics = tactic_results[adversary][item[0]][item[1]]['Analytics']
+            #         confidence = tactic_results[adversary][item[0]][item[1]]['Confidence']/4
+            #         quality = tactic_results[adversary][item[0]][item[1]]['Quality']
+            #         det_score = (.3 * visibility)+ (.175 * analytics) + (.175 * confidence) + (.175 * quality) + (.175 * prot)
+            #         corr_score = (.2 * visibility)+ (.25 * analytics) + (.25 * confidence) + (.20 * quality) + (.10 * prot)
+            #         auto_score = (.2 * visibility)+ (.15 * analytics) + (.15 * confidence) + (.25 * quality) + (.25 * prot)
+            #         try:
+            #             writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" % det_score, "%.3f" % corr_score, "%.3f" % auto_score, "%.3f" % tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" % tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" % (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" % tactic_results[adversary][item[0]][item[1]]['Quality'], "%.3f" % prot])
+            #         except Exception as e:
+            #             print(e)
+            # else:
+            #     writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Visibility', 'Analytics', 'Confidence', 'Quality'])
+            #     rs = []
+            #     ts = []
+            #     us = []
+            #     for tactic in ranking.keys():
+            #         for technique in ranking[tactic].keys():
+            #             us.append(tactic)
+            #             ts.append(technique)
+            #             rs.append(ranking[tactic][technique]['Unweighted'])
+            #     us, ts, rs = [list(t) for t in zip(*sorted(zip(us, ts, rs), key=lambda x: x[2]))]
+            #     scores = zip(reversed(us), reversed(ts), reversed(rs))
+            #     for item in scores:
+            #         try:
+            #             writer.writerow([item[0], item[1], "%.3f" % item[2], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Visibility'], "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Analytics'],"%.3f" %  (tactic_results[adversary][item[0]][item[1]]['Confidence']/4), "%.3f" %  tactic_results[adversary][item[0]][item[1]]['Quality']])
+            #         except:
+            #             pass
     technique_set_1 = set()
     for tactic in technique_coverage['carbanak-fin7'].keys():
         for t in technique_coverage['carbanak-fin7'][tactic]:
@@ -1085,11 +1098,11 @@ def run_eval():
                 vendor_lst.append(vendor)
     print(f'there are {len(vendor_lst)} vendors participated in evaluations')
 
-    graph_rankings('carbanak-fin7')
-    graph_rankings('wizard-spider-sandworm')
+    # graph_rankings('carbanak-fin7')
+    # graph_rankings('wizard-spider-sandworm')
     # graph_results('carbanak-fin7', vendor_results, tactic_results)
-    graph_protections('carbanak-fin7')
-    graph_protections('wizard-spider-sandworm')
+    # graph_protections('carbanak-fin7')
+    # graph_protections('wizard-spider-sandworm')
     
 
 if __name__ == "__main__":
