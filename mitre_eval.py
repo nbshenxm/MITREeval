@@ -150,6 +150,10 @@ def score_df(df, rnd):
     except KeyError:
         misses = 0
     try:
+        MSSP = counts['MSSP']
+    except:
+        MSSP = 0
+    try:
         tactic = counts['Tactic']
     except KeyError:
         tactic = 0
@@ -169,14 +173,14 @@ def score_df(df, rnd):
     except KeyError:
         na = 0
     substeps = len(df.index) - na
-    visibility = (substeps - misses)
+    visibility = (substeps - misses - MSSP)
     quality = 0
     for index, content in df.iterrows():
         if content['Detection'] != 'N/A' or content['Detection'] != 'None' or content['Detection'] != 'MSSP':
             if content['Modifiers'].find('Delayed') == -1 and content['Modifiers'].find('Configuration Change') == -1:
                 quality += 1
     cdf = df[df['Modifiers'].str.contains('Delayed|Configuration Change', na=False)]
-    print(cdf['Modifiers'].unique())
+    # print(cdf['Modifiers'].unique())
     badcounts = cdf.Detection.value_counts()
     try:
         bna = badcounts['N/A']
@@ -217,10 +221,15 @@ def score_df(df, rnd):
         except:
             techniquelevel = 0
         try:
+            IOC = counts['Indicator of Compromise']
+        except:
+            IOC = 0
+        try:
             telemetry = counts['Telemetry']
         except:
             telemetry = 0
-        confidence = ((4 * techniquelevel) + (3 * general) + (2 * enrich) + telemetry)/substeps
+        # confidence = ((4 * techniquelevel) + (3 * general) + (2 * enrich) + telemetry)/substeps
+        detection = techniquelevel + general + enrich + IOC
     else:
         try:
             techniquelevel = counts['Technique']
@@ -230,18 +239,20 @@ def score_df(df, rnd):
             telemetry = counts['Telemetry']
         except:
             telemetry = 0
-        confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps
-
+        # confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps
+        detection = techniquelevel + tactic + general
     # visibility /= substeps
+    assert detection == visibility-telemetry, f"detection counts ({detection}) should be visibility ({visibility}) minus telemetry counts ({telemetry})"
         
-    return visibility, techniques, substeps, confidence
+    return visibility, detection, substeps
 
 def query_df(pdf, rnd, mode, query):
     df = pdf[(pdf[mode] == query) & (pdf['Adversary'] == rnd)]
     if len(df.index) == 0:
         return None
-    visibility, analytics, quality, confidence = score_df(df, rnd)
-    return visibility, analytics, quality, confidence
+    visibility, detection, substeps = score_df(df, rnd)
+    # visibility, analytics, quality, confidence = score_df(df, rnd)
+    return int(visibility), int(detection), int(substeps)
 
 def analyze_graph(df):
     wizard_spider_list = [
@@ -435,7 +446,7 @@ def analyze_graph(df):
         # print(idx)
 
         if (idx in wizard_spider_skip) or (idx-52 in sandworm_skip):
-            print("skipping...")
+            # print("skipping...")
             continue
         if detection == 'N/A':
             not_supported.append(substep)
@@ -495,36 +506,36 @@ def run_analysis(filenames):
                     vendor_results[adversary] = {}
                 tdf = pd.concat([tdf.loc[:], df]).reset_index(drop=True)
                 # tdf = tdf.append(df, ignore_index=True)
-                visibility, analytics, quality, confidence = query_df(df, adversary, 'Vendor', vendor)
-                g = None
-                g_v = None
-                g_q = None
-                g_c = None
-                pct = analytics * 100
-                pct_v = visibility * 100
-                pct_q = quality * 100
-                pct_c = confidence * 100
-                for grade in grading.keys():
-                    low = grading[grade][0]
-                    high = grading[grade][1]
-                    if pct >= low and pct <= high:
-                        g = grade
-                    if pct_v >= low and pct_v <= high:
-                        g_v = grade
-                    if pct_q >= low and pct_q <= high:
-                        g_q = grade
-                    if pct_c >= low and pct_c <= high:
-                        g_c = grade
+                visibility, detection, substeps = query_df(df, adversary, 'Vendor', vendor)
+                # g = None
+                # g_v = None
+                # g_q = None
+                # g_c = None
+                # pct = analytics * 100
+                # pct_v = visibility * 100
+                # pct_q = quality * 100
+                # pct_c = confidence * 100
+                # for grade in grading.keys():
+                #     low = grading[grade][0]
+                #     high = grading[grade][1]
+                #     if pct >= low and pct <= high:
+                #         g = grade
+                #     if pct_v >= low and pct_v <= high:
+                #         g_v = grade
+                #     if pct_q >= low and pct_q <= high:
+                #         g_q = grade
+                #     if pct_c >= low and pct_c <= high:
+                #         g_c = grade
                 # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
                 #     tally = datasources[adversary][vendor]['Tally']
                 #     availability = (sum(datasources[adversary][vendor].values()) - tally)/tally
                 #     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
                 # else:
-                vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence}
+                vendor_results[adversary][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps}
             except Exception as e:
                 print(e)
         
-        max_ = 0
+        # max_ = 0
         # for vendor in vendor_results['carbanak-fin7'].keys():
         #     if vendor_results['carbanak-fin7'][vendor]['Availability'] > max_:
         #         max_ = vendor_results['carbanak-fin7'][vendor]['Availability']
@@ -532,7 +543,7 @@ def run_analysis(filenames):
         #     vendor_results['carbanak-fin7'][vendor]['Availability'] /= max_
         with open('results/vendor_results.json', 'w') as fp:
             json.dump(vendor_results, fp, indent=4)
-        print(seg_dict)
+        # print(seg_dict)
         # print(block_dict)
         # print(not_supported_dict)
     else:
@@ -553,12 +564,12 @@ def run_analysis(filenames):
                     try:
                         #for vendor in participants_by_eval[adversary]:
                         #df = crawl_results(vendor + '_Results.json', adversary)
-                        visibility, analytics, quality, confidence = query_df(tdf, adversary, 'TechniqueName', technique)
-                        try:
-                            prot = tactic_protections[technique]['Blocked']/tactic_protections[technique]['Total']
-                        except:
-                            prot = 0
-                        tactic_results[adversary][tactic][technique] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': prot}
+                        visibility, detection, substeps = query_df(tdf, adversary, 'TechniqueName', technique)
+                        # try:
+                        #     prot = tactic_protections[technique]['Blocked']/tactic_protections[technique]['Total']
+                        # except:
+                        #     prot = 0
+                        tactic_results[adversary][tactic][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps}
                     except Exception as e:
                         pass
         with open('results/tactic_results.json', 'w') as fp:
@@ -946,7 +957,7 @@ def run_eval():
         with open(f'results/{adversary}_vendor_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
             if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
-                writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
+                writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
                 rs = []
                 vs = []
                 us = []
@@ -992,7 +1003,7 @@ def run_eval():
         with open(f'results/{adversary}_technique_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
             if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
-                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection', 'Availability'])
+                writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
                 rs = []
                 ts = []
                 us = []
