@@ -81,6 +81,7 @@ def crawl_results(filename):
                             datasources[rnd][substep['Substep']] = {}
                         for detection in detections:
                             detection_type = detection['Detection_Type'].replace(' ', '')
+                            # isModified = len(detection['Modifiers']) == 0
                             if dt[ret['Detection_Type'].replace(' ', '')].value < dt[detection_type].value:
                                 ret = detection
                             # if vendor not in datasources[rnd].keys():
@@ -546,6 +547,7 @@ def run_analysis(filenames):
         # print(seg_dict)
         # print(block_dict)
         # print(not_supported_dict)
+        print(datasources)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
@@ -1086,7 +1088,7 @@ def run_eval():
     print(f'there are {len(technique_set_4)} techniques in apt29')
 
     technique_set = technique_set_1 | technique_set_2
-    print(f'there are {len(technique_set)} techniques in two evluations')
+    print(f'there are {len(technique_set)} techniques in carbanak-fin7 and wizard-spider-sandworm evluations')
 
     total_technique_set = technique_set_1 | technique_set_2 | technique_set_3 | technique_set_4
     print(f'there are {len(total_technique_set)} techniques in four evluations')
