@@ -38,6 +38,8 @@ for e in evaluations:
 technique_coverage = {}
 vendor_protections = {}
 datasources = {}
+modifiers = {}
+num_of_detection = {}
 tactic_protections = {}
 
 def crawl_results(filename):
@@ -46,6 +48,10 @@ def crawl_results(filename):
     vendor = name_lst[0]
     rnd = name_lst[1]
     vendor_protections[vendor] = {}
+    if rnd not in num_of_detection.keys():
+        num_of_detection[rnd] = {}
+    if rnd not in modifiers.keys():
+        modifiers[rnd] = {}
     if rnd not in datasources.keys():
         datasources[rnd] = {}
     if rnd not in technique_coverage.keys():
@@ -79,7 +85,14 @@ def crawl_results(filename):
                         dt = Enum('DetectionTypes', detection_types[rnd])
                         if substep['Substep'] not in datasources[rnd].keys():
                             datasources[rnd][substep['Substep']] = {}
+                        if substep['Substep'] not in modifiers[rnd].keys():
+                            modifiers[rnd][substep['Substep']] = {}
+                        if substep['Substep'] not in num_of_detection[rnd].keys():
+                            num_of_detection[rnd][substep['Substep']] = 0
                         for detection in detections:
+                            if detection['Detection_Type'] == 'None':
+                                continue
+                            num_of_detection[rnd][substep['Substep']] += 1
                             detection_type = detection['Detection_Type'].replace(' ', '')
                             # isModified = len(detection['Modifiers']) == 0
                             if dt[ret['Detection_Type'].replace(' ', '')].value < dt[detection_type].value:
@@ -87,6 +100,11 @@ def crawl_results(filename):
                             # if vendor not in datasources[rnd].keys():
                             #     datasources[rnd][vendor] = {}
                             try:
+                                for modifier in detection['Modifiers']:
+                                    if modifier not in modifiers[rnd][substep['Substep']].keys():
+                                        modifiers[rnd][substep['Substep']][modifier] = 1
+                                    else:
+                                        modifiers[rnd][substep['Substep']][modifier] += 1
                                 for source in detection['Data_Sources']:
                                     try:
                                         datasources[rnd][substep['Substep']][source] += 1
@@ -548,6 +566,8 @@ def run_analysis(filenames):
         # print(block_dict)
         # print(not_supported_dict)
         print(datasources)
+        print(modifiers)
+        print(num_of_detection)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
