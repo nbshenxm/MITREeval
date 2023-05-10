@@ -565,9 +565,22 @@ def run_analysis(filenames):
         # print(seg_dict)
         # print(block_dict)
         # print(not_supported_dict)
-        print(datasources)
-        print(modifiers)
-        print(num_of_detection)
+        # print(datasources)
+        ds_freq_dict = {}
+        for rnd in datasources.keys():
+            if rnd not in ds_freq_dict.keys():
+                ds_freq_dict[rnd] = {}
+            for substep in datasources[rnd].keys():
+                for ds in datasources[rnd][substep].keys():
+                    if ds not in ds_freq_dict[rnd].keys():
+                        ds_freq_dict[rnd][ds] = 1
+                    else:
+                        ds_freq_dict[rnd][ds] += 1
+        print(ds_freq_dict)
+        for rnd in ds_freq_dict.keys():
+            print(f'{rnd} has {len(ds_freq_dict[rnd].keys())} different data sources')
+        # print(modifiers)
+        # print(num_of_detection)
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
