@@ -248,6 +248,7 @@ def score_df(df, rnd):
         except:
             telemetry = 0
         # confidence = ((4 * techniquelevel) + (3 * general) + (2 * enrich) + telemetry)/substeps
+        confidence = 0
         detection = techniquelevel + general + enrich + IOC
     else:
         try:
@@ -258,20 +259,20 @@ def score_df(df, rnd):
             telemetry = counts['Telemetry']
         except:
             telemetry = 0
-        # confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps
+        confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps/4
         detection = techniquelevel + tactic + general
     # visibility /= substeps
     assert detection == visibility-telemetry, f"detection counts ({detection}) should be visibility ({visibility}) minus telemetry counts ({telemetry})"
         
-    return visibility, detection, substeps
+    return visibility, detection, substeps, confidence, quality
 
 def query_df(pdf, rnd, mode, query):
     df = pdf[(pdf[mode] == query) & (pdf['Adversary'] == rnd)]
     if len(df.index) == 0:
         return None
-    visibility, detection, substeps = score_df(df, rnd)
+    visibility, detection, substeps, confidence, quality = score_df(df, rnd)
     # visibility, analytics, quality, confidence = score_df(df, rnd)
-    return int(visibility), int(detection), int(substeps)
+    return int(visibility), int(detection), int(substeps), float(confidence), float(quality)
 
 def analyze_graph(df):
     wizard_spider_list = [
@@ -525,7 +526,7 @@ def run_analysis(filenames):
                     vendor_results[adversary] = {}
                 tdf = pd.concat([tdf.loc[:], df]).reset_index(drop=True)
                 # tdf = tdf.append(df, ignore_index=True)
-                visibility, detection, substeps = query_df(df, adversary, 'Vendor', vendor)
+                visibility, detection, substeps, confidence, quality = query_df(df, adversary, 'Vendor', vendor)
                 # g = None
                 # g_v = None
                 # g_q = None
@@ -550,7 +551,7 @@ def run_analysis(filenames):
                 #     availability = (sum(datasources[adversary][vendor].values()) - tally)/tally
                 #     vendor_results[adversary][vendor] = {'Visibility': visibility, 'Analytics': analytics, 'Quality': quality, 'Confidence': confidence, 'Protection': vendor_protections[vendor][adversary], 'Availability': availability}
                 # else:
-                vendor_results[adversary][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps}
+                vendor_results[adversary][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
             except Exception as e:
                 print(e)
         
@@ -573,13 +574,32 @@ def run_analysis(filenames):
             for substep in datasources[rnd].keys():
                 for ds in datasources[rnd][substep].keys():
                     if ds not in ds_freq_dict[rnd].keys():
-                        ds_freq_dict[rnd][ds] = 1
+                        ds_freq_dict[rnd][ds] = datasources[rnd][substep][ds]
                     else:
-                        ds_freq_dict[rnd][ds] += 1
+                        ds_freq_dict[rnd][ds] += datasources[rnd][substep][ds]
+        # print(ds_freq_dict)
+        for rnd in ds_freq_dict.keys():
+            ds_freq_dict[rnd] = dict(sorted(ds_freq_dict[rnd].items(), key=lambda x:x[1], reverse=True))
         print(ds_freq_dict)
+
         for rnd in ds_freq_dict.keys():
             print(f'{rnd} has {len(ds_freq_dict[rnd].keys())} different data sources')
         # print(modifiers)
+        modifier_freq_dict = {}
+        for rnd in modifiers.keys():
+            if rnd not in modifier_freq_dict.keys():
+                modifier_freq_dict[rnd] = {}
+            for substep in modifiers[rnd].keys():
+                for md in modifiers[rnd][substep].keys():
+                    if md not in modifier_freq_dict[rnd].keys():
+                        modifier_freq_dict[rnd][md] = modifiers[rnd][substep][md]
+                    else:
+                        modifier_freq_dict[rnd][md] += modifiers[rnd][substep][md]
+        # print(modifier_freq_dict)
+        for rnd in modifier_freq_dict.keys():
+            modifier_freq_dict[rnd] = dict(sorted(modifier_freq_dict[rnd].items(), key=lambda x:x[1], reverse=True))
+        print(modifier_freq_dict)
+        #     print(f'{rnd} has {len(modifier_freq_dict[rnd].keys())} different modifiers')
         # print(num_of_detection)
     else:
         with open('results/vendor_results.json', 'r') as fp:
@@ -599,12 +619,12 @@ def run_analysis(filenames):
                     try:
                         #for vendor in participants_by_eval[adversary]:
                         #df = crawl_results(vendor + '_Results.json', adversary)
-                        visibility, detection, substeps = query_df(tdf, adversary, 'TechniqueName', technique)
+                        visibility, detection, substeps, confidence, quality = query_df(tdf, adversary, 'TechniqueName', technique)
                         # try:
                         #     prot = tactic_protections[technique]['Blocked']/tactic_protections[technique]['Total']
                         # except:
                         #     prot = 0
-                        tactic_results[adversary][tactic][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps}
+                        tactic_results[adversary][tactic][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
                     except Exception as e:
                         pass
         with open('results/tactic_results.json', 'w') as fp:
@@ -991,10 +1011,10 @@ def run_eval():
         # rankings[adversary] = ranking
         with open(f'results/{adversary}_vendor_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
-            writer.writerow(['Vendor', 'Visibility', 'Detection', 'Substeps'])
+            writer.writerow(['Vendor', 'Visibility', 'Detection', 'Substeps', 'Confidence', 'Quality'])
             for vendor, vendor_dict in vendor_results[adversary].items():
                 try:
-                    writer.writerow([vendor, "%.3f" % vendor_dict['Visibility'], "%.3f" %  vendor_dict['Detection'], "%.3f" %  vendor_dict['Substeps']])
+                    writer.writerow([vendor, "%.3f" % vendor_dict['Visibility'], "%.3f" %  vendor_dict['Detection'], "%.3f" %  vendor_dict['Substeps'], "%.3f" %  vendor_dict['Confidence'], "%.3f" %  vendor_dict['Quality']])
                 except Exception as e:
                     print(e)
             # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
@@ -1128,6 +1148,7 @@ def run_eval():
 
     vendor_lst = []
     for adv in vendor_results:
+        print(f'there are {len(vendor_results[adv])} vendors participated in {adv} evaluation')
         for vendor in vendor_results[adv]:
             if vendor not in vendor_lst:
                 vendor_lst.append(vendor)
