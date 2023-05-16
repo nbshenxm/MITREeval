@@ -264,7 +264,7 @@ for eval, eval_dict in freq_dict.items():
     sorted_freq_dict[eval] = {k: v for k, v in sorted(eval_dict.items(), key=lambda item: item[1])}
 # sorted_freq_dict = {k: v for k, v in sorted(freq_dict.items(), key=lambda item: item[1])}
 print(f'There are {len(block_dict)} vendors in Wizard Spider + Sandworm evaluation')
-print(f'{len(not_support_lst)} vendors doesn\'t participate in the protection test')
+print(f'{len(not_support_lst)} vendors didn\'t participate in the protection test')
 print(sorted_freq_dict)
 
 for vendor, lst in not_linux_dict.items():
