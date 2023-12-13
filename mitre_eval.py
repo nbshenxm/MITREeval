@@ -11,6 +11,7 @@ from enum import Enum
 from ref import StatsRef
 import seaborn as sns
 from graph import Graph
+import pdb
 
 try:
     os.remove('results/vendor_results.json')
@@ -28,7 +29,7 @@ pd.set_option("display.max_rows", None)
 filenames = [f for f in os.listdir('json')]
 
 r = StatsRef()
-attacks, colors, evaluations, participants, countries, scoring, grading, detection_types, modifiers, participants_by_eval = r.get_references()
+attacks, colors, evaluations, participants, countries, scoring, grading, detection_types, modifiers = r.get_references()
 for e in evaluations:
     if not os.path.exists(os.getcwd() + f'/graphs/{e}'):
         os.makedirs(os.getcwd() + f'/graphs/{e}')
@@ -36,17 +37,23 @@ for e in evaluations:
 # technique_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
 # vendor_coverage = pd.DataFrame(columns=('Tactic', 'TechniqueName', 'Detection', 'Modifiers'))
 technique_coverage = {}
+linux_technique_coverage = {'carbanak-fin7': [], 'wizard-spider-sandworm': [], 'turla': []}
 vendor_protections = {}
 datasources = {}
 modifiers = {}
 num_of_detection = {}
 tactic_protections = {}
+linux_tactic_result = {'carbanak-fin7': {}, 'wizard-spider-sandworm': {}, 'turla': {}}
+linux_vendor_result = {'carbanak-fin7': {}, 'wizard-spider-sandworm': {}, 'turla': {}}
+
 
 def crawl_results(filename):
     print(f'processing {filename}...')
     name_lst = filename.split('_')
     vendor = name_lst[0]
     rnd = name_lst[1]
+    linux_steps_carbanak = ['5.A.7', '5.A.8', '5.A.9', '5.A.10', '5.A.11', '5.B.1', '5.B.2', '5.B.3', '5.B.4', '5.B.5', '5.B.6', '5.B.7']
+    linux_steps_sandworm = ['11.A.1', '11.A.2', '11.A.3', '11.A.4', '12.A.1', '12.A.2', '12.A.3', '12.A.4', '12.A.5', '13.A.1', '13.A.2', '13.A.3', '13.A.4', '13.A.5', '14.A.1', '14.A.2', '14.A.3', '14.A.4', '14.A.5']
     vendor_protections[vendor] = {}
     if rnd not in num_of_detection.keys():
         num_of_detection[rnd] = {}
@@ -56,8 +63,8 @@ def crawl_results(filename):
         datasources[rnd] = {}
     if rnd not in technique_coverage.keys():
         technique_coverage[rnd] = {}
-    pdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers'))
-    with open('json/' + filename, 'r') as fp:
+    pdf = pd.DataFrame(columns=('Vendor', 'Adversary', 'Substep', 'Criteria', 'Tactic', 'TechniqueId', 'TechniqueName', 'SubtechniqueId', 'Detection', 'Modifiers', 'Platform'))
+    with open('json/' + filename, 'r', encoding='utf-8') as fp:
         data = json.load(fp)
         for elem in data['Adversaries']:
             if elem['Adversary_Name'] != rnd:
@@ -67,7 +74,7 @@ def crawl_results(filename):
                 for item in elem['Detections_By_Step'][f'Scenario_{ii}']['Steps']:
                     for substep in item['Substeps']:
                         tally += 1
-                        obj = {'Vendor': vendor, 'Adversary': rnd, 'Substep':None, 'Criteria':None, 'Tactic':None, 'TechniqueId':None, 'TechniqueName':None, 'SubtechniqueId':None, 'Detection':None, 'Modifiers':None}
+                        obj = {'Vendor': vendor, 'Adversary': rnd, 'Substep':None, 'Criteria':None, 'Tactic':None, 'TechniqueId':None, 'TechniqueName':None, 'SubtechniqueId':None, 'Detection':None, 'Modifiers':None, 'Platform': 'Windows'}
                         technique = substep['Technique']['Technique_Name']
                         tactic = substep['Tactic']['Tactic_Name']
                         if tactic not in technique_coverage[rnd].keys():
@@ -75,6 +82,17 @@ def crawl_results(filename):
                         if technique not in technique_coverage[rnd][tactic]:
                             technique_coverage[rnd][tactic].append(technique)
                         detections = substep['Detections']
+                        if "Linux Capability" in substep['Capability_Requirements']:
+                            obj['Platform'] = 'Linux'
+                            linux_technique_coverage[rnd].append(technique)
+                        # if rnd == 'carbanak-fin7':
+                        #     if substep['Substep'] in linux_steps_carbanak:
+                        #         obj['Platform'] = 'Linux'
+                        #         linux_technique_coverage[rnd].append(technique)
+                        # if rnd == 'wizard-spider-sandworm':
+                        #     if substep['Substep'] in linux_steps_sandworm:
+                        #         obj['Platform'] = 'Linux'
+                        #         linux_technique_coverage[rnd].append(technique)
                         obj['Substep'] = substep['Substep']
                         obj['Criteria'] = substep['Criteria']
                         obj['Tactic'] = tactic
@@ -90,9 +108,9 @@ def crawl_results(filename):
                         if substep['Substep'] not in num_of_detection[rnd].keys():
                             num_of_detection[rnd][substep['Substep']] = 0
                         for detection in detections:
-                            if detection['Detection_Type'] == 'None':
-                                continue
-                            num_of_detection[rnd][substep['Substep']] += 1
+                            if detection['Detection_Type'] != 'None':
+                                num_of_detection[rnd][substep['Substep']] += 1
+                            
                             detection_type = detection['Detection_Type'].replace(' ', '')
                             # isModified = len(detection['Modifiers']) == 0
                             if dt[ret['Detection_Type'].replace(' ', '')].value < dt[detection_type].value:
@@ -192,12 +210,16 @@ def score_df(df, rnd):
     except KeyError:
         na = 0
     substeps = len(df.index) - na
+    if substeps == 0:
+        return 0,0,0,0,0
+    # print(f'number of misses is {misses}')
     visibility = (substeps - misses - MSSP)
     quality = 0
     for index, content in df.iterrows():
         if content['Detection'] != 'N/A' or content['Detection'] != 'None' or content['Detection'] != 'MSSP':
             if content['Modifiers'].find('Delayed') == -1 and content['Modifiers'].find('Configuration Change') == -1:
                 quality += 1
+    # print(quality)
     cdf = df[df['Modifiers'].str.contains('Delayed|Configuration Change', na=False)]
     # print(cdf['Modifiers'].unique())
     badcounts = cdf.Detection.value_counts()
@@ -210,9 +232,10 @@ def score_df(df, rnd):
     except:
         bnone = 0
     badsteps = len(cdf.index) - bna - bnone
-    quality = 1 - (badsteps/int(visibility))
-    if type(quality) != float:
-        quality = 0
+    quality = 1 - (badsteps/float(visibility))
+    # print(quality)
+    # if type(quality) != float:
+    #     quality = 0
     assert(quality >= 0 and quality <= 1)
     if rnd == 'apt3':
         try:
@@ -259,7 +282,7 @@ def score_df(df, rnd):
             telemetry = counts['Telemetry']
         except:
             telemetry = 0
-        confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/substeps/4
+        confidence = ((4 * techniquelevel) + (3 * tactic) + (2 * general) + telemetry)/visibility/4
         detection = techniquelevel + tactic + general
     # visibility /= substeps
     assert detection == visibility-telemetry, f"detection counts ({detection}) should be visibility ({visibility}) minus telemetry counts ({telemetry})"
@@ -554,6 +577,8 @@ def run_analysis(filenames):
                 vendor_results[adversary][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
             except Exception as e:
                 print(e)
+                pdb.traceback.print_exc()
+                
         
         # max_ = 0
         # for vendor in vendor_results['carbanak-fin7'].keys():
@@ -600,7 +625,48 @@ def run_analysis(filenames):
             modifier_freq_dict[rnd] = dict(sorted(modifier_freq_dict[rnd].items(), key=lambda x:x[1], reverse=True))
         print(modifier_freq_dict)
         #     print(f'{rnd} has {len(modifier_freq_dict[rnd].keys())} different modifiers')
+
+        detection_freq_dict = {}
+        for rnd in num_of_detection.keys():
+            if rnd not in detection_freq_dict.keys():
+                detection_freq_dict[rnd] = 0
+            for substep in num_of_detection[rnd].keys():
+                
+                detection_freq_dict[rnd] += num_of_detection[rnd][substep]
+        # print(modifier_freq_dict)
+        # for rnd in detection_freq_dict.keys():
+        #     detection_freq_dict[rnd] = dict(sorted(detection_freq_dict[rnd].items(), key=lambda x:x[1], reverse=True))
+        # print(detection_freq_dict)
         # print(num_of_detection)
+        carbanak_substeps = len(tdf[(tdf['Adversary'] == 'carbanak-fin7')]['Substep'].unique())
+        wizard_substeps = len(tdf[(tdf['Adversary'] == 'wizard-spider-sandworm')]['Substep'].unique())
+        turla_substeps = len(tdf[(tdf['Adversary'] == 'turla')]['Substep'].unique())
+        print(f'There are {carbanak_substeps} substeps in carbanak-fin7')
+        print(f'There are {wizard_substeps} substeps in wizard-spider-sandworm')
+        print(f'There are {turla_substeps} substeps in turla')
+
+        linux_df_carbanak = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'carbanak-fin7')]
+        linux_df_wizard = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'wizard-spider-sandworm')]
+        linux_df_turla = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'turla')]
+
+        carbanak_linux_substeps = len(linux_df_carbanak['Substep'].unique())
+        wizard_linux_substeps = len(linux_df_wizard['Substep'].unique())
+        turla_linux_substeps = len(linux_df_turla['Substep'].unique())
+        print(f'There are {carbanak_linux_substeps} Linux substeps in carbanak-fin7')
+        print(f'There are {wizard_linux_substeps} Linux substeps in wizard-spider-sandworm')
+        print(f'There are {turla_linux_substeps} Linux substeps in turla')
+        for vendor in vendor_results['carbanak-fin7'].keys():
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_carbanak, 'carbanak-fin7', 'Vendor', vendor)
+            linux_vendor_result['carbanak-fin7'][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+            # print(linux_vendor_result['carbanak-fin7'][vendor])
+        for vendor in vendor_results['wizard-spider-sandworm'].keys():
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_wizard, 'wizard-spider-sandworm', 'Vendor', vendor)
+            linux_vendor_result['wizard-spider-sandworm'][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+        for vendor in vendor_results['turla'].keys():
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_turla, 'turla', 'Vendor', vendor)
+            linux_vendor_result['turla'][vendor] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+        
+
     else:
         with open('results/vendor_results.json', 'r') as fp:
             vendor_results = json.load(fp)
@@ -629,6 +695,20 @@ def run_analysis(filenames):
                         pass
         with open('results/tactic_results.json', 'w') as fp:
             json.dump(tactic_results, fp, indent=4)
+
+        linux_df_carbanak = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'carbanak-fin7')]
+        linux_df_wizard = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'wizard-spider-sandworm')]
+        linux_df_turla = tdf[(tdf['Platform'] == 'Linux') & (tdf['Adversary'] == 'turla')]
+        for technique in linux_technique_coverage['carbanak-fin7']:
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_carbanak, 'carbanak-fin7', 'TechniqueName', technique)
+            linux_tactic_result['carbanak-fin7'][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+        for technique in linux_technique_coverage['wizard-spider-sandworm']:
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_wizard, 'wizard-spider-sandworm', 'TechniqueName', technique)
+            linux_tactic_result['wizard-spider-sandworm'][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+        for technique in linux_technique_coverage['turla']:
+            visibility, detection, substeps, confidence, quality = query_df(linux_df_turla, 'turla', 'TechniqueName', technique)
+            linux_tactic_result['turla'][technique] = {'Visibility': visibility, 'Detection': detection, 'Substeps': substeps, 'Confidence': confidence, 'Quality': quality}
+
     else:
         with open('results/tactic_results.json', 'r') as fp:
             tactic_results = json.load(fp)
@@ -642,13 +722,14 @@ def graph_results(adversary, vendor_results, tactic_results=None):
         'Analytics': 'red',
         'Quality': 'blue'
     }
-    vendors = participants_by_eval[adversary]
+    # vendors = participants_by_eval[adversary]
+    vendors = vendor_results[adversary].keys()
     visibility = []
     analytics = []
     for vendor in vendors:
         item = vendor_results[adversary][vendor]
-        visibility.append(item['Visibility'])
-        analytics.append(item['Analytics'])
+        visibility.append(float(item['Visibility'])/float(item['Substeps']))
+        analytics.append(float(item['Detection'])/float(item['Visibility']))
     fig = plt.figure(figsize=(12, 12))
     vendors, visibility, analytics = [list(t) for t in zip(*sorted(zip(vendors, visibility, analytics), key=lambda x: x[1] + x[2]))]
     points = list(zip(visibility, analytics))
@@ -656,7 +737,7 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g = sns.scatterplot(x='Visibility', y='Analytics', data=df)
     g.tick_params(labelsize=14)
     g.set_xlabel("Visibility", fontsize = 20)
-    g.set_ylabel("Analytics", fontsize = 20)
+    g.set_ylabel("Analytic Coverage", fontsize = 20)
     for line in range(0,df.shape[0]):
         if adversary == 'carbanak-fin7':
             if df.index[line] == 'Bitdefender':
@@ -729,7 +810,7 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     plt.ylim(0, 1)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Vendor Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Vendor Breakdown.pdf')
     plt.close()
 
     quality = []
@@ -746,10 +827,10 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g.set_xlabel("Vendor", fontsize = 20)
     g.set_ylabel("Quality", fontsize = 20)
     g.set_xticklabels(vendors, rotation=90, fontsize = 12)
-    g.set_yticklabels([x/5 for x in list(range(6))], fontsize = 18)
+    # g.set_yticklabels([x/5 for x in list(range(6))], fontsize = 18)
     plt.autoscale(False)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Quality Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Quality Breakdown.pdf')
     plt.close()
 
     confidence = []
@@ -768,10 +849,10 @@ def graph_results(adversary, vendor_results, tactic_results=None):
     g.set_xlabel("Vendor", fontsize = 20)
     g.set_ylabel("Confidence", fontsize = 20)
     g.set_xticklabels(vendors, rotation=90, fontsize = 12)
-    g.set_yticks(list(range(5)))
-    plt.ylim(0, 4)
+    # g.set_yticks(list(range(5)))
+    plt.ylim(0, 1)
     plt.tight_layout()
-    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Confidence Breakdown.png')
+    plt.savefig(os.getcwd() + f'/graphs/{adversary}/Confidence Breakdown.pdf')
     plt.close()
 
 def graph_protections(adversary):
@@ -803,6 +884,121 @@ def graph_protections(adversary):
     plt.tight_layout()
     plt.savefig(os.getcwd() + f'/graphs/{adversary}/Protection Breakdown.png')
     plt.close()
+
+def graph_box(rnd):
+    import matplotlib.ticker as ticker
+    df = pd.DataFrame(columns=('Metric', 'Value'))
+    with open('results/tactic_results.json', 'r') as fp:
+        tactic_results = json.load(fp)
+        for tactic in tactic_results[rnd].keys():
+            for technique in tactic_results[rnd][tactic].keys():
+                item = tactic_results[rnd][tactic][technique]
+                vis_score = float(item['Visibility'])/float(item['Substeps'])
+                det_score = float(item['Detection'])/float(item['Visibility'])
+                vis = {'Metric': 'Visibility', 'Value': vis_score}
+                det = {'Metric': 'Analytic Coverage', 'Value': det_score}
+                conf = {'Metric': 'Confidence', 'Value': item['Confidence']}
+                qual = {'Metric': 'Quality', 'Value': item['Quality']}
+                new_row = pd.DataFrame([vis, det, conf, qual])
+                df = pd.concat([df.loc[:], new_row]).reset_index(drop=True)
+    g = sns.boxplot(x='Metric', y='Value', data=df)
+    g.set_xlabel("Metrics", fontsize = 16)
+    g.set_ylabel("Score", fontsize = 16)
+    # sns.move_legend(g, "center right")
+    g.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    g.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    plt.ylim(-0.05, 1.05)
+    # plt.legend()
+    # plt.autoscale(True)
+    plt.tight_layout()
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/boxplot_tactic.pdf')
+    plt.close()
+    # plt.show()  
+
+    df = pd.DataFrame(columns=('Metric', 'Value'))
+    with open('results/vendor_results.json', 'r') as fp:
+        vendor_results = json.load(fp)
+        for vendor in vendor_results[rnd].keys():
+            item = vendor_results[rnd][vendor]
+            vis_score = float(item['Visibility'])/float(item['Substeps'])
+            det_score = float(item['Detection'])/float(item['Visibility'])
+            vis = {'Metric': 'Visibility', 'Value': vis_score}
+            det = {'Metric': 'Analytic Coverage', 'Value': det_score}
+            conf = {'Metric': 'Confidence', 'Value': item['Confidence']}
+            qual = {'Metric': 'Quality', 'Value': item['Quality']}
+            new_row = pd.DataFrame([vis, det, conf, qual])
+            df = pd.concat([df.loc[:], new_row]).reset_index(drop=True)
+    g = sns.boxplot(x='Metric', y='Value', data=df)
+    g.set_xlabel("Metrics", fontsize = 16)
+    g.set_ylabel("Score", fontsize = 16)
+    # sns.move_legend(g, "center right")
+    g.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    g.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    plt.ylim(-0.05, 1.05)
+    # plt.legend()
+    # plt.autoscale(True)
+    plt.tight_layout()
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/boxplot_vendor.pdf')
+    plt.close()
+    # plt.show() 
+
+def graph_box_linux(rnd):
+    import matplotlib.ticker as ticker
+    df = pd.DataFrame(columns=('Metric', 'Value'))
+    for technique in linux_tactic_result[rnd].keys():
+        item = linux_tactic_result[rnd][technique]
+        if item['Substeps'] == 0:
+            continue
+        vis_score = float(item['Visibility'])/float(item['Substeps'])
+        det_score = float(item['Detection'])/float(item['Visibility'])
+        vis = {'Metric': 'Visibility', 'Value': vis_score}
+        det = {'Metric': 'Analytic Coverage', 'Value': det_score}
+        conf = {'Metric': 'Confidence', 'Value': item['Confidence']}
+        qual = {'Metric': 'Quality', 'Value': item['Quality']}
+        new_row = pd.DataFrame([vis, det, conf, qual])
+        df = pd.concat([df.loc[:], new_row]).reset_index(drop=True)
+    g = sns.boxplot(x='Metric', y='Value', data=df)
+    g.set_xlabel("Metrics", fontsize = 16)
+    g.set_ylabel("Score", fontsize = 16)
+    # sns.move_legend(g, "center right")
+    g.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    g.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    plt.ylim(-0.05, 1.05)
+    # plt.legend()
+    # plt.autoscale(True)
+    plt.tight_layout()
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/boxplot_tactic_linux.pdf')
+    plt.close()
+    # plt.show()  
+
+    df = pd.DataFrame(columns=('Metric', 'Value'))
+    for vendor in linux_vendor_result[rnd].keys():
+        item = linux_vendor_result[rnd][vendor]
+        if item['Substeps'] == 0:
+            continue
+        vis_score = float(item['Visibility'])/float(item['Substeps'])
+        det_score = float(item['Detection'])/float(item['Visibility'])
+        vis = {'Metric': 'Visibility', 'Value': vis_score}
+        det = {'Metric': 'Analytic Coverage', 'Value': det_score}
+        conf = {'Metric': 'Confidence', 'Value': item['Confidence']}
+        qual = {'Metric': 'Quality', 'Value': item['Quality']}
+        new_row = pd.DataFrame([vis, det, conf, qual])
+        df = pd.concat([df.loc[:], new_row]).reset_index(drop=True)
+    g = sns.boxplot(x='Metric', y='Value', data=df)
+    g.set_xlabel("Metrics", fontsize = 16)
+    g.set_ylabel("Score", fontsize = 16)
+    # sns.move_legend(g, "center right")
+    g.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    g.yaxis.set_major_formatter(ticker.ScalarFormatter())
+    plt.ylim(-0.05, 1.05)
+    # plt.legend()
+    # plt.autoscale(True)
+    plt.tight_layout()
+    plt.savefig(os.getcwd() + f'/graphs/{rnd}/boxplot_vendor_linux.pdf')
+    plt.close()
+    # plt.show()  
+     
+
 
 def graph_rankings(rnd):
     import matplotlib.ticker as ticker
@@ -1017,6 +1213,7 @@ def run_eval():
                     writer.writerow([vendor, "%.3f" % vendor_dict['Visibility'], "%.3f" %  vendor_dict['Detection'], "%.3f" %  vendor_dict['Substeps'], "%.3f" %  vendor_dict['Confidence'], "%.3f" %  vendor_dict['Quality']])
                 except Exception as e:
                     print(e)
+                    pdb.traceback.print_exc()
             # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
             #     writer.writerow(['Vendor', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
             #     rs = []
@@ -1063,13 +1260,14 @@ def run_eval():
         # rankings[adversary] = ranking
         with open(f'results/{adversary}_technique_Rankings.csv', 'w', newline='') as fp:
             writer = csv.writer(fp)
-            writer.writerow(['Tactic', 'Technique', 'Visibility', 'Detection', 'Substeps'])
+            writer.writerow(['Tactic', 'Technique', 'Visibility', 'Detection', 'Substeps', 'Confidence', 'Quality'])
             for tactic in tactic_results[adversary].keys():
                 for technique, technique_dict in tactic_results[adversary][tactic].items():
                     try:
-                        writer.writerow([tactic, technique, "%.3f" % technique_dict['Visibility'], "%.3f" %  technique_dict['Detection'], "%.3f" %  technique_dict['Substeps']])
+                        writer.writerow([tactic, technique, "%.3f" % technique_dict['Visibility'], "%.3f" %  technique_dict['Detection'], "%.3f" %  technique_dict['Substeps'], "%.3f" %  technique_dict['Confidence'], "%.3f" %  technique_dict['Quality']])
                     except Exception as e:
                         print(e)
+                        pdb.traceback.print_exc()
             # if adversary == 'carbanak-fin7' or adversary == 'wizard-spider-sandworm':
             #     writer.writerow(['Tactic', 'Technique', 'Unweighted Score', 'Detection Priority Score', 'Correlation Priority Score', 'Automation Priority Score', 'Visibility', 'Analytics', 'Confidence', 'Quality', 'Protection'])
             #     rs = []
@@ -1139,12 +1337,18 @@ def run_eval():
             technique_set_4.add(t)
             # print(f'adding {t} to the set, size: {len(technique_set_2)}')
     print(f'there are {len(technique_set_4)} techniques in apt29')
+    technique_set_5 = set()
+    for tactic in technique_coverage['turla'].keys():
+        for t in technique_coverage['turla'][tactic]:
+            technique_set_5.add(t)
+            # print(f'adding {t} to the set, size: {len(technique_set_2)}')
+    print(f'there are {len(technique_set_5)} techniques in turla')
 
     technique_set = technique_set_1 | technique_set_2
     print(f'there are {len(technique_set)} techniques in carbanak-fin7 and wizard-spider-sandworm evluations')
 
-    total_technique_set = technique_set_1 | technique_set_2 | technique_set_3 | technique_set_4
-    print(f'there are {len(total_technique_set)} techniques in four evluations')
+    total_technique_set = technique_set_1 | technique_set_2 | technique_set_3 | technique_set_4 | technique_set_5
+    print(f'there are {len(total_technique_set)} techniques in all evluations')
 
     vendor_lst = []
     for adv in vendor_results:
@@ -1156,7 +1360,16 @@ def run_eval():
 
     # graph_rankings('carbanak-fin7')
     # graph_rankings('wizard-spider-sandworm')
-    # graph_results('carbanak-fin7', vendor_results, tactic_results)
+    graph_results('carbanak-fin7', vendor_results, tactic_results)
+    graph_results('wizard-spider-sandworm', vendor_results, tactic_results)
+    graph_box('apt3')
+    graph_box('apt29')
+    graph_box('carbanak-fin7')
+    graph_box('wizard-spider-sandworm')
+    graph_box('turla')
+    graph_box_linux('carbanak-fin7')
+    graph_box_linux('wizard-spider-sandworm')
+    graph_box_linux('turla')
     # graph_protections('carbanak-fin7')
     # graph_protections('wizard-spider-sandworm')
     

@@ -133,7 +133,7 @@ class StatsRef:
             'Networking / AMSI', 'Network connection , ETW', 'RPC', 'Memory Analysis', 'Cynet AV', 'Memory Scanning/Signatures', 'Signatures in memory', 'Behavior rules']
 
     def __evaluations__(self):
-        return ['apt3', 'apt29', 'carbanak-fin7', 'wizard-spider-sandworm']
+        return ['apt3', 'apt29', 'carbanak-fin7', 'wizard-spider-sandworm', 'turla']
 
     def __participants__(self):
         participants = [
@@ -208,21 +208,23 @@ class StatsRef:
             'apt3': 'N/A None Telemetry IndicatorofCompromise Enrichment GeneralBehavior SpecificBehavior',
             'apt29': 'N/A None MSSP Telemetry General Tactic Technique',
             'carbanak-fin7': 'N/A None Telemetry General Tactic Technique',
-            'wizard-spider-sandworm': 'N/A None Telemetry General Tactic Technique'
+            'wizard-spider-sandworm': 'N/A None Telemetry General Tactic Technique',
+            'turla': 'N/A None Telemetry General Tactic Technique'
         }
 
-    def __participants_by_eval__(self):
-        return {'apt3': ['Elastic', 'McAfee', 'F-Secure', 'CrowdStrike', 'FireEye', 'RSA', 'Cybereason', 'Microsoft', 'PaloAltoNetworks', 'GoSecure', 'SentinelOne'], 
-        'apt29': ['Elastic', 'McAfee', 'Kaspersky', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Malwarebytes', 'HanSight', 'Microsoft', 'PaloAltoNetworks', 'Secureworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'CyCraft', 'ReaQta'], 
-        'carbanak-fin7': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta'],
-        'wizard-spider-sandworm': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta']}
+    # def __participants_by_eval__(self):
+    #     return {'apt3': ['Elastic', 'McAfee', 'F-Secure', 'CrowdStrike', 'FireEye', 'RSA', 'Cybereason', 'Microsoft', 'PaloAltoNetworks', 'GoSecure', 'SentinelOne'], 
+    #     'apt29': ['Elastic', 'McAfee', 'Kaspersky', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Malwarebytes', 'HanSight', 'Microsoft', 'PaloAltoNetworks', 'Secureworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'CyCraft', 'ReaQta'], 
+    #     'carbanak-fin7': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta'],
+    #     'wizard-spider-sandworm': ['Elastic', 'McAfee', 'VMware', 'F-Secure', 'CrowdStrike', 'FireEye', 'TrendMicro', 'Symantec', 'Cybereason', 'Uptycs', 'Malwarebytes', 'MicroFocus', 'Cisco', 'Cynet', 'Sophos', 'CheckPoint', 'AhnLab', 'Microsoft', 'OpenText', 'PaloAltoNetworks', 'Bitdefender', 'Cylance', 'GoSecure', 'SentinelOne', 'ESET', 'Fidelis', 'CyCraft', 'Fortinet', 'ReaQta']}
 
     def __modifiers__(self):
         return {
             'apt3': ['Tainted'],
             'apt29': ['Correlated', 'Innovative'],
             'carbanak-fin7': [],
-            'wizard-spider-sandworm': []
+            'wizard-spider-sandworm': [],
+            'turla': []
         }
 
     def get_references(self):
@@ -235,9 +237,9 @@ class StatsRef:
         g = self.__grading__()
         d = self.__detections__()
         m = self.__modifiers__()
-        pe = self.__participants_by_eval__()
+        # pe = self.__participants_by_eval__()
 
-        return a, c, e, p, cs, s, g, d, m, pe
+        return a, c, e, p, cs, s, g, d, m
 
 if __name__ == '__main__':
     r = StatsRef()

@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 from networkx.drawing.nx_agraph import graphviz_layout
+import os
 
 # Define the connectivity matrix
 wizard_spider_connectivity = {
@@ -261,7 +262,7 @@ for vendor, eval_dict in sub_dict.items():
 # print(freq_dict)
 sorted_freq_dict = {}
 for eval, eval_dict in freq_dict.items():
-    sorted_freq_dict[eval] = {k: v for k, v in sorted(eval_dict.items(), key=lambda item: item[1])}
+    sorted_freq_dict[eval] = {k: v for k, v in sorted(eval_dict.items(), key=lambda item: item[1], reverse=True)}
 # sorted_freq_dict = {k: v for k, v in sorted(freq_dict.items(), key=lambda item: item[1])}
 print(f'There are {len(block_dict)} vendors in Wizard Spider + Sandworm evaluation')
 print(f'{len(not_support_lst)} vendors didn\'t participate in the protection test')
@@ -307,14 +308,15 @@ for node, neighbors in wizard_spider_connectivity.items():
         G_wizard_spider.add_edge(node, neighbor)
 
 # Draw the graph
-pos = graphviz_layout(G_sandworm, prog='dot')
-nx.draw_networkx_nodes(G_sandworm, pos, node_size=20)
-nx.draw_networkx_edges(G_sandworm, pos, width=1)
-# nx.draw_networkx_nodes(G_wizard_spider.subgraph([0, 17, 33]), pos, node_color='red', node_size=20)
-nx.draw_networkx_nodes(G_sandworm.subgraph([0, 19, 42]), pos, node_color='red', node_size=20)
+pos = graphviz_layout(G_wizard_spider, prog='dot')
+nx.draw_networkx_nodes(G_wizard_spider, pos, node_size=20)
+nx.draw_networkx_edges(G_wizard_spidern, pos, width=1)
+nx.draw_networkx_nodes(G_wizard_spider.subgraph([0, 17, 33]), pos, node_color='red', node_size=20)
+# nx.draw_networkx_nodes(G_sandworm.subgraph([0, 19, 42]), pos, node_color='red', node_size=20)
 # nx.draw_networkx_labels(G, pos, font_size=16, font_family="sans-serif")
 # nx.draw(G, pos)
 
-
-# plt.axis("off")
+plt.tight_layout()
+plt.axis("off")
+plt.savefig(os.getcwd() + f'/graphs/wizard-spider-sandworm/wizard_spiderCasualGraph.pdf')
 # plt.show()
