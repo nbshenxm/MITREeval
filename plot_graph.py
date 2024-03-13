@@ -310,7 +310,7 @@ for node, neighbors in wizard_spider_connectivity.items():
 # Draw the graph
 pos = graphviz_layout(G_wizard_spider, prog='dot')
 nx.draw_networkx_nodes(G_wizard_spider, pos, node_size=20)
-nx.draw_networkx_edges(G_wizard_spidern, pos, width=1)
+nx.draw_networkx_edges(G_wizard_spider, pos, width=1)
 nx.draw_networkx_nodes(G_wizard_spider.subgraph([0, 17, 33]), pos, node_color='red', node_size=20)
 # nx.draw_networkx_nodes(G_sandworm.subgraph([0, 19, 42]), pos, node_color='red', node_size=20)
 # nx.draw_networkx_labels(G, pos, font_size=16, font_family="sans-serif")

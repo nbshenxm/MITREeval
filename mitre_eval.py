@@ -2,6 +2,7 @@ from fileinput import filename
 import json, os, csv
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
 import matplotlib.patches as mpatches
 import matplotlib.ticker as plticker
 from pprint import pprint
@@ -12,6 +13,9 @@ from ref import StatsRef
 import seaborn as sns
 from graph import Graph
 import pdb
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 try:
     os.remove('results/vendor_results.json')
